@@ -1,4 +1,5 @@
 const ActivitySubmission = require('../models/ActivitySubmission');
+const mongoose = require('mongoose');
 const dayjs = require('dayjs');
 
 const buildDateRange = (from, to) => {
@@ -11,10 +12,13 @@ const buildDateRange = (from, to) => {
 
 const getStudentReport = async (req, res) => {
   const { studentId } = req.params;
-  const { from, to, page = 1, limit = 50 } = req.query;
+  const { startDate, endDate, page = 1, limit = 50 } = req.query;
   try {
-    const dateRange = buildDateRange(from, to);
-    const query = { studentId };
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ message: 'Invalid studentId format' });
+    }
+    const dateRange = buildDateRange(startDate, endDate);
+    const query = { studentId: mongoose.Types.ObjectId(studentId) };
     if (dateRange) query.date = dateRange;
 
     const docs = await ActivitySubmission.find(query)
@@ -32,9 +36,9 @@ const getStudentReport = async (req, res) => {
 
 const getActivityReport = async (req, res) => {
   const { templateId } = req.params;
-  const { from, to, page = 1, limit = 50 } = req.query;
+  const { startDate, endDate, page = 1, limit = 50 } = req.query;
   try {
-    const dateRange = buildDateRange(from, to);
+    const dateRange = buildDateRange(startDate, endDate);
     const query = { templateId };
     if (dateRange) query.date = dateRange;
 
@@ -53,9 +57,9 @@ const getActivityReport = async (req, res) => {
 
 const getDepartmentReport = async (req, res) => {
   const { dept } = req.params;
-  const { from, to, page = 1, limit = 50 } = req.query;
+  const { startDate, endDate, page = 1, limit = 50 } = req.query;
   try {
-    const dateRange = buildDateRange(from, to);
+    const dateRange = buildDateRange(startDate, endDate);
     const query = { department: dept };
     if (dateRange) query.date = dateRange;
 

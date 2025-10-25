@@ -32,11 +32,19 @@ const uploadFiles = async (req, res) => {
       };
     }));
 
-    // Optionally save to database if needed
-    // const submission = new ActivitySubmission({ ...req.body, files: uploads });
-    // await submission.save();
+    // Save to database
+    const submission = new ActivitySubmission({
+      studentId: req.body.studentId || req.user.id, // Use from body or auth user
+      studentName: req.body.studentName,
+      templateId: req.body.templateId,
+      department: req.body.department,
+      title: req.body.title,
+      description: req.body.description,
+      files: uploads
+    });
+    await submission.save();
 
-    return res.status(201).json({ files: uploads });
+    return res.status(201).json({ submission, files: uploads });
   } catch (err) {
     console.error('Upload error', err);
     return res.status(500).json({ message: 'File upload failed', error: err.message });

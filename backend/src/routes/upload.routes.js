@@ -37,8 +37,20 @@ router.post('/', verifyToken, upload.array('files', 10), async (req, res) => {
       };
     }));
 
-    // If you want to save uploads attached to a submission, do it here or return to client
-    return res.status(201).json({ files: uploads });
+    // Save to database
+    const ActivitySubmission = require('../models/ActivitySubmission');
+    const submission = new ActivitySubmission({
+      studentId: req.body.studentId || req.user.id, // Use from body or auth user
+      studentName: req.body.studentName,
+      templateId: req.body.templateId,
+      department: req.body.department,
+      title: req.body.title,
+      description: req.body.description,
+      files: uploads
+    });
+    await submission.save();
+
+    return res.status(201).json({ submission, files: uploads });
   } catch (err) {
     console.error('Upload error', err);
     return res.status(500).json({ message: 'File upload failed', error: err.message });
