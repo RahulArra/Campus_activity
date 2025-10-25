@@ -193,7 +193,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../services/api'; // Use our new api service
 import DynamicFormRenderer from '../components/DynamicFormRenderer';
 import FileUploader from '../components/FileUploader'; // Import Shravan's component
-
+import './SubmitActivity.css'; // <-- 1. IMPORT THE CSS
 function SubmitActivity() {
   // State for data
   const [templates, setTemplates] = useState([]);
@@ -208,10 +208,19 @@ function SubmitActivity() {
 
   useEffect(() => {
     setIsLoading(true);
-    api.get('/templates') // Use the api service
+    api.get('/templates')
       .then(res => {
-        if (res.data && Array.isArray(res.data.templates)) {
-          setTemplates(res.data.templates);
+        // Support both array and object response
+        const rawTemplates = Array.isArray(res.data) ? res.data : res.data.templates;
+        if (rawTemplates && Array.isArray(rawTemplates)) {
+          const mappedTemplates = rawTemplates.map(template => ({
+            ...template,
+            fields: (template.fields || []).map(field => ({
+              ...field,
+              id: field.fieldId || field.id
+            }))
+          }));
+          setTemplates(mappedTemplates);
         } else {
           setTemplates([]);
         }
@@ -291,7 +300,7 @@ function SubmitActivity() {
       >
         <option value="">Select Activity Template</option>
         {templates.map(t => (
-          <option key={t._id} value={t._id}>{t.name}</option>
+          <option key={t._id} value={t._id}>{t.name || t.templateName || 'Untitled Template'}</option>
         ))}
       </select>
 

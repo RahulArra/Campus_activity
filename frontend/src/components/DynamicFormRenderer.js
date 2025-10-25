@@ -164,11 +164,9 @@
 // }
 
 // export default DynamicFormRenderer;
-
 import React from 'react';
 
-// This component is now "dumb" and just receives props.
-// It gets the form data *from* the parent.
+// This component is "dumb" and just receives props.
 function DynamicFormRenderer({ template, formData, onFormChange }) {
 
   // This simple handler tells the parent to update its state
@@ -190,8 +188,6 @@ function DynamicFormRenderer({ template, formData, onFormChange }) {
 
     switch (type) {
       case "text":
-      case "number":
-      case "date":
         return (
           <div key={fieldId}>
             <label>{label}{required ? " *" : ""}</label>
@@ -202,6 +198,24 @@ function DynamicFormRenderer({ template, formData, onFormChange }) {
               value={value}
               required={required}
               onChange={handleChange}
+              minLength="3"      // --- ADDED: Good default for names/titles
+              maxLength="250"    // --- ADDED: Prevents huge text inputs
+            />
+          </div>
+        );
+
+      case "number":
+        return (
+          <div key={fieldId}>
+            <label>{label}{required ? " *" : ""}</label>
+            <input
+              type={type}
+              id={fieldId}
+              name={fieldId}
+              value={value}
+              required={required}
+              onChange={handleChange}
+              min="0"            // --- ADDED: Prevents negative numbers
             />
           </div>
         );
@@ -216,6 +230,8 @@ function DynamicFormRenderer({ template, formData, onFormChange }) {
               value={value}
               required={required}
               onChange={handleChange}
+              minLength="10"     // --- ADDED: Good for descriptions
+              maxLength="1000"   // --- ADDED: Prevents massive text
             />
           </div>
         );
@@ -238,6 +254,21 @@ function DynamicFormRenderer({ template, formData, onFormChange }) {
             </select>
           </div>
         );
+      
+      case "date": // --- ADDED: Split 'date' from 'text' for clarity
+        return (
+          <div key={fieldId}>
+            <label>{label}{required ? " *" : ""}</label>
+            <input
+              type={type}
+              id={fieldId}
+              name={fieldId}
+              value={value}
+              required={required}
+              onChange={handleChange}
+            />
+          </div>
+        );
 
       default:
         return null;
@@ -253,3 +284,4 @@ function DynamicFormRenderer({ template, formData, onFormChange }) {
 }
 
 export default DynamicFormRenderer;
+

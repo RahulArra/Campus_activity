@@ -7,12 +7,10 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-/*
-// Later, Shiva will help you add this part:
 // This will automatically add the login token to every request
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token'); 
+    const token = localStorage.getItem('token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
@@ -22,6 +20,5 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-*/
 
 export default api;
