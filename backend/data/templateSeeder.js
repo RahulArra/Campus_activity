@@ -1,5 +1,4 @@
-const ActivityTemplate = require('../models/ActivityTemplate'); 
-
+const ActivityTemplate = require('../models/activityTemplate.model');
 // NOTE: This array contains the data structure definitions for 20 activity templates.
 
 const templateData = [
