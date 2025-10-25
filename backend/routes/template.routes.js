@@ -43,7 +43,7 @@ const mockTemplates = [
 router.get('/', (req, res) => {
   try {
     // Just send the hard-coded mock data
-    res.json(mockTemplates);
+    res.json({ templates: mockTemplates }); // wrap inside object
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
