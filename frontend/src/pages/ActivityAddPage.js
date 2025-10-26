@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react';
 import api from '../services/api'; // Use our new api service
 import DynamicFormRenderer from '../components/DynamicFormRenderer';
 import FileUploader from '../components/FileUploader'; // Import Shravan's component
-import './SubmitActivity.css'; // <-- 1. IMPORT THE CSS
-function SubmitActivity() {
+import './ActivityAddPage.css'; // <-- 1. IMPORT THE CSS
+function ActivityAddPage() {
   // State for data
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -146,4 +146,4 @@ function SubmitActivity() {
   );
 }
 
-export default SubmitActivity;
+export default ActivityAddPage;

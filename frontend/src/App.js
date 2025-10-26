@@ -1,7 +1,7 @@
 // frontend/src/App.js
 
 import React from 'react';
-import SubmitActivity from './pages/SubmitActivity'; // Import your new page
+import SubmitActivity from './pages/ActivityAddPage'; // Import your new page
 import './App.css';
 
 function App() {
