@@ -1,4 +1,4 @@
-/* Ensure select and option elements are visible and usable */
+/* Ensure select and option elements are visible and usable
 select, option {
   color: #222;
   background: #fff;
@@ -50,4 +50,4 @@ option {
   to {
     transform: rotate(360deg);
   }
-}
+} */
