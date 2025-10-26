@@ -4,7 +4,7 @@ const router = express.Router();
 const upload = require('../middleware/upload'); // multer
 const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
-const verifyToken = require('../middleware/auth');
+const { authenticateJWT: verifyToken } = require('../middleware/auth.middleware.js');
 
 async function uploadBufferToCloudinary(buffer, folder = 'activity_uploads') {
   return new Promise((resolve, reject) => {
@@ -19,42 +19,29 @@ async function uploadBufferToCloudinary(buffer, folder = 'activity_uploads') {
   });
 }
 
-// Accepts field 'files' as array
-router.post('/', verifyToken, upload.array('files', 10), async (req, res) => {
-  try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: 'No files uploaded' });
+// Handle single file upload
+router.post('/', verifyToken, upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        const result = await uploadBufferToCloudinary(req.file.buffer);
+        
+        res.json({
+            url: result.secure_url,
+            filename: result.public_id,
+            fileType: req.file.mimetype,
+            width: result.width,
+            height: result.height
+        });
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({ 
+            message: 'Error uploading file',
+            error: error.message 
+        });
     }
-
-    const uploads = await Promise.all(req.files.map(async file => {
-      const result = await uploadBufferToCloudinary(file.buffer);
-      return {
-        url: result.secure_url,
-        filename: result.public_id,
-        fileType: file.mimetype,
-        width: result.width,
-        height: result.height,
-      };
-    }));
-
-    // Save to database
-    const ActivitySubmission = require('../models/ActivitySubmission');
-    const submission = new ActivitySubmission({
-      studentId: req.body.studentId || req.user.id, // Use from body or auth user
-      studentName: req.body.studentName,
-      templateId: req.body.templateId,
-      department: req.body.department,
-      title: req.body.title,
-      description: req.body.description,
-      files: uploads
-    });
-    await submission.save();
-
-    return res.status(201).json({ submission, files: uploads });
-  } catch (err) {
-    console.error('Upload error', err);
-    return res.status(500).json({ message: 'File upload failed', error: err.message });
-  }
 });
 
 module.exports = router;

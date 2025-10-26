@@ -4,7 +4,7 @@ const router = express.Router();
 const puppeteer = require('puppeteer');
 const dayjs = require('dayjs');
 const Activity = require('../models/ActivitySubmission');
-const verifyToken = require('../middleware/auth');
+const { authenticateJWT: verifyToken } = require('../middleware/auth.middleware.js');
 const { Parser } = require('json2csv');
 
 // GET /api/reports/department/:dept/export?format=csv or pdf

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Submission = require('../models/submission.model');
-const { authenticateJWT } = require('../middleware/auth.middleware');
+const { authenticateJWT } = require('../middleware/auth.middleware.js');
 
 // --- Create a new Submission ---
 // POST /api/submissions

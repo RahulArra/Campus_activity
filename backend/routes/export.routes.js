@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const Activity = require('../models/ActivitySubmission');
-const verifyToken = require('../middleware/auth');
+const { authenticateJWT: verifyToken } = require('../middleware/auth.middleware.js');
 const { Parser } = require('json2csv');
 const dayjs = require('dayjs');
 const puppeteer = require('puppeteer');

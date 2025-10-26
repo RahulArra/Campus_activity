@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const Activity = require('../models/ActivitySubmission');
-const verifyToken = require('../middleware/auth');
+const { authenticateJWT: verifyToken } = require('../middleware/auth.middleware.js');
 const dayjs = require('dayjs');
 
 // Helper to build date filter
