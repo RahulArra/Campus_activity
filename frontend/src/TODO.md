@@ -1,0 +1,11 @@
+- [x] Install react-router-dom (already installed)
+- [x] Install lucide-react dependency
+- [x] Modify App.js to add routing for admin pages
+- [x] Import AdminTemplateCRUD and AdminSubmissionsView
+- [x] Set up BrowserRouter, Routes, and Route components
+- [x] Add routes: / for SubmitActivity, /admin/templates for AdminTemplateCRUD, /admin/submissions for AdminSubmissionsView
+- [x] Test the routing (npm start running successfully, app compiled with warnings)
+- [x] Add CSV and PDF export endpoints to backend
+- [x] Install missing dependencies (json2csv, puppeteer)
+- [x] Start backend server (running on port 5000)
+- [x] Start frontend server (running on port 3001)

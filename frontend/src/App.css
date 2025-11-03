@@ -1,3 +1,18 @@
+/* Ensure select and option elements are visible and usable
+select, option {
+  color: #222;
+  background: #fff;
+}
+
+select:focus, select:hover {
+  outline: 2px solid #61dafb;
+  cursor: pointer;
+}
+
+option {
+  color: #222;
+  background: #fff;
+}
 .App {
   text-align: center;
 }
@@ -35,4 +50,4 @@
   to {
     transform: rotate(360deg);
   }
-}
+} */

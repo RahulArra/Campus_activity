@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken'); // <-- ADD THIS IMPORT AT THE TOP
 router.post('/signup', async (req, res) => {
   try {
     // 1. Get user data from request body
-    const { name, email, password, department } = req.body;
+    const { name, email, password, department , role } = req.body;
 
     // 2. Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -26,6 +26,7 @@ router.post('/signup', async (req, res) => {
       email,
       password: hashedPassword,
       department,
+      role: role || 'user' // <<<--- ADD THIS LINE: Use provided role or default to 'user'
     });
 
     // 5. Save user to database

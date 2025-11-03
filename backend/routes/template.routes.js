@@ -1,21 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const templateController = require('../controllers/template.controller'); // Import your new controller!
+const templateController = require('../controllers/template.controller');
+const { authenticateJWT } = require('../middleware/auth.middleware.js');
+// const { authorizeRole } = require('../middleware/auth.middleware.js'); // Add when ready
 
-// --- Template CRUD Routes (Required by Laxman's Admin Panel) ---
+// --- Template Routes ---
 
-// Route for fetching all templates and creating new ones
 router.route('/')
-    // GET /api/templates: Fetch all templates (Used by Rahul's Dynamic Forms)
-    .get(templateController.getTemplates) 
-    // POST /api/templates: Create new template (Used by Admin Template CRUD UI)
-    .post(templateController.createTemplate); 
+    .get(templateController.getTemplates) // GET /api/templates
+    .post(authenticateJWT, /* authorizeRole(['admin']), */ templateController.createTemplate); // POST /api/templates
 
-// Route for operations on a specific template ID
+// --- Routes for specific ID --- *** THIS DEFINES THE PUT ROUTE ***
 router.route('/:id')
-    // PUT /api/templates/:id: Update existing template (Used by Admin Template CRUD UI)
-    .put(templateController.updateTemplate) 
-    // DELETE /api/templates/:id: Delete template (Used by Admin Template CRUD UI)
-    .delete(templateController.deleteTemplate); 
+    // PUT /api/templates/:id
+    .put(authenticateJWT, /* authorizeRole(['admin']), */ templateController.updateTemplate)
+    // DELETE /api/templates/:id
+    .delete(authenticateJWT, /* authorizeRole(['admin']), */ templateController.deleteTemplate);
 
 module.exports = router;

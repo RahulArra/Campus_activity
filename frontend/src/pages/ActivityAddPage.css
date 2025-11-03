@@ -1,0 +1,125 @@
+/* --- Main Form Container --- */
+.submit-activity-container {
+  width: 90%;
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 2rem;
+  /* Use a dark background that's lighter than the page */
+  background-color: #2c3e50; 
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  color: #ecf0f1; /* Light text for all labels */
+}
+
+/* --- Headings --- */
+.submit-activity-container h2,
+.submit-activity-container h3,
+.submit-activity-container h4 {
+  color: #ffffff;
+  border-bottom: 1px solid #4a637e;
+  padding-bottom: 10px;
+  margin-top: 1.5rem;
+}
+.submit-activity-container h2 {
+  text-align: center;
+  margin-top: 0;
+}
+
+/* * --- THE FIX FOR ALL INPUTS (SELECT, INPUT, TEXTAREA) --- 
+ * This makes them visible in dark mode.
+ */
+.submit-activity-container select,
+.submit-activity-container input[type="text"],
+.submit-activity-container input[type="number"],
+.submit-activity-container input[type="date"],
+.submit-activity-container textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  background-color: #34495e; /* Darker input background */
+  color: #ecf0f1; /* Light text */
+  border: 1px solid #5d7c9b;
+  border-radius: 4px;
+  box-sizing: border-box; /* IMPORTANT for 100% width */
+  font-size: 16px;
+}
+
+/* * --- THE FIX FOR YOUR DROPDOWN OPTIONS --- 
+ * This makes the <option> tags have black text on a white background.
+ */
+.submit-activity-container option {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+/* --- Labels --- */
+.submit-activity-container label {
+  font-weight: bold;
+  display: block; /* Ensures it's above the input */
+}
+
+/* --- Buttons --- */
+.submit-activity-container button[type="submit"] {
+  background-color: #db34cd; /* A nice blue */
+  color: #ffffff;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  width: 100%;
+  transition: background-color 0.2s;
+}
+
+.submit-activity-container button[type="submit"]:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.submit-activity-container button[type="submit"]:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+/* --- Success and Error Messages --- */
+.message-success {
+  color: #2ecc71; /* Green */
+  font-weight: bold;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.message-error {
+  color: #e74c3c; /* Red */
+  font-weight: bold;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+/* --- File Uploader Styling --- */
+.file-uploader {
+  background-color: #34495e;
+  border: 2px dashed #5d7c9b;
+  padding: 1.5rem;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.file-uploader input[type="file"] {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+}
+
+.proof-list ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+.proof-list li a {
+  color: #3498db;
+  text-decoration: none;
+}
+.proof-list li a:hover {
+  text-decoration: underline;
+}
