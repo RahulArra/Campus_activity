@@ -56,9 +56,11 @@ router.get('/', authenticateJWT, async (req, res) => {
     // If they are an 'admin', they can query any userId (or none to get all)
 
     // 3. Find all submissions that match the filter
-    const submissions = await Submission.find(filter)
-      .populate('templateId', 'templateName templateCategory') // Gets the template name
-      .sort({ createdAt: -1 }); // Show newest first
+const submissions = await Submission.find(filter)
+  .populate('templateId', 'templateName templateCategory')
+  .populate('userId', 'name department email')  // ✅ Added user details
+  .sort({ createdAt: -1 });
+
 
     res.json(submissions);
 

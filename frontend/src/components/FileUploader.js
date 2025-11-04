@@ -89,8 +89,17 @@ function FileUploader({ proofs, setProofs }) {
     formData.append('file', file);
     
     try {
+      // Get the auth token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Please log in to upload files');
+      }
+
       const response = await api.post('/uploads', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       const fileData = response.data; 
@@ -98,7 +107,13 @@ function FileUploader({ proofs, setProofs }) {
 
     } catch (err) {
       console.error(err);
-      setUploadError('File upload failed. Please try again.');
+      if (err.message === 'Please log in to upload files') {
+        setUploadError('Please log in to upload files');
+      } else if (err.response?.status === 403) {
+        setUploadError('Authorization failed. Please try logging in again.');
+      } else {
+        setUploadError('File upload failed. Please try again.');
+      }
     } finally {
       setIsUploading(false);
       e.target.value = null; 

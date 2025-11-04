@@ -15,38 +15,38 @@ const DashboardPage = () => {
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ templateType: '', dateRange: { from: null, to: null } });
 
-  const fetchSubmissions = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const userId = user?.id;
-      if (!userId) throw new Error("User ID is missing.");
-      
-      let query = `?userId=${userId}`;
-      if (filters.templateType) query += `&templateId=${filters.templateType}`;
-      if (filters.dateRange.from) query += `&from=${filters.dateRange.from}`; 
-      if (filters.dateRange.to) query += `&to=${filters.dateRange.to}`; 
+const fetchSubmissions = useCallback(async () => {
+  if (!user) return; // Prevent running when user is null
 
-      // ACTIVATE REAL API CALL: GET /api/submissions?userId=<id>&filters... 
-      const response = await API.get(`/submissions${query}`); 
-      
-      setSubmissions(response.data); 
-      
-    } catch (err) {
-      console.error("Failed to fetch submissions:", err);
-      const errorMessage = err.message === 'Network Error' 
-        ? 'Cannot connect to the server. Ensure the backend is running and CORS is configured.'
-        : err.response?.data?.message || 'Could not load your activities.';
+  setLoading(true);
+  setError(null);
 
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [user.id, filters]); 
+  try {
+    const userId = user.id;
+    if (!userId) throw new Error("User ID is missing.");
 
-  useEffect(() => {
-    fetchSubmissions();
-  }, [fetchSubmissions]); 
+    let query = `?userId=${userId}`;
+    if (filters.templateType) query += `&templateId=${filters.templateType}`;
+    if (filters.dateRange.from) query += `&from=${filters.dateRange.from}`; 
+    if (filters.dateRange.to) query += `&to=${filters.dateRange.to}`; 
+
+    const response = await API.get(`/submissions${query}`); 
+    setSubmissions(response.data);
+  } catch (err) {
+    console.error("Failed to fetch submissions:", err);
+    const errorMessage = err.message === 'Network Error'
+      ? 'Cannot connect to the server. Ensure the backend is running and CORS is configured.'
+      : err.response?.data?.message || 'Could not load your activities.';
+    setError(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+}, [user, filters]);
+
+
+useEffect(() => {
+  if (user) fetchSubmissions();
+}, [fetchSubmissions, user]);
 
   const handleViewDetails = (submissionId) => {
     navigate(`/activity/view/${submissionId}`);

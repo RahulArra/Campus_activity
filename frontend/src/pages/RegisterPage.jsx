@@ -27,7 +27,7 @@ const RegisterPage = () => {
         ...data,
         // Role is often added server-side, but if required: role: 'user'
       }); 
-      
+      console.log("hey this is smaple",data);
       setSuccessMessage('Registration successful! Redirecting to login...');
       setTimeout(() => {
         navigate('/login');
@@ -73,25 +73,53 @@ const RegisterPage = () => {
 
         <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ mt: 1, width: '100%' }}>
           {/* Name Input */}
-          <StyledInput label="Full Name" name="name" control={control} required />
-          
-          {/* Email Input */}
-          <StyledInput 
-            label="Email Address" 
-            name="email" 
-            type="email" 
-            control={control} 
-            required
-          />
-          
-          {/* Password Input */}
-          <StyledInput 
-            label="Password" 
-            name="password" 
-            type="password" 
-            control={control}
-            required
-          />
+          <Controller
+  name="name"
+  control={control}
+  defaultValue=""
+  rules={{ required: 'Full Name is required' }}
+  render={({ field, fieldState: { error } }) => (
+    <StyledInput
+      {...field}
+      label="Full Name"
+      error={!!error}
+      helperText={error ? error.message : null}
+    />
+  )}
+/>
+
+<Controller
+  name="email"
+  control={control}
+  defaultValue=""
+  rules={{ required: 'Email is required' }}
+  render={({ field, fieldState: { error } }) => (
+    <StyledInput
+      {...field}
+      label="Email Address"
+      type="email"
+      error={!!error}
+      helperText={error ? error.message : null}
+    />
+  )}
+/>
+
+<Controller
+  name="password"
+  control={control}
+  defaultValue=""
+  rules={{ required: 'Password is required' }}
+  render={({ field, fieldState: { error } }) => (
+    <StyledInput
+      {...field}
+      label="Password"
+      type="password"
+      error={!!error}
+      helperText={error ? error.message : null}
+    />
+  )}
+/>
+
 
           {/* Department Select Input */}
           <Controller
