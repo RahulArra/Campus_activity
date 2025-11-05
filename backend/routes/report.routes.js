@@ -225,10 +225,15 @@ router.get('/department/:dept/export', verifyToken, async (req, res) => {
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=department_${dept}_report.pdf`);
-      
-const puppeteer = require('puppeteer');
+      const puppeteer = require('puppeteer');
+
+const chromePath =
+  process.env.PUPPETEER_EXECUTABLE_PATH ||
+  '/opt/render/.cache/puppeteer/chrome/linux-142.0.7444.59/chrome-linux64/chrome';
+
 const browser = await puppeteer.launch({
   headless: true,
+  executablePath: chromePath,
   args: [
     '--no-sandbox',
     '--disable-setuid-sandbox',
@@ -241,12 +246,13 @@ const browser = await puppeteer.launch({
   ]
 });
 
-      const page = await browser.newPage();
-      await page.setContent(html);
-      const pdf = await page.pdf({ format: 'A4' });
-      await browser.close();
-      
-      return res.send(pdf);
+const page = await browser.newPage();
+await page.setContent(html);
+const pdf = await page.pdf({ format: 'A4' });
+await browser.close();
+
+return res.send(pdf);
+
     }
   } catch (err) {
     console.error('Export error:', err);
