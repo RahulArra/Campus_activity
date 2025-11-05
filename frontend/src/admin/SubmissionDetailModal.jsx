@@ -50,7 +50,7 @@ const SubmissionDetailModal = ({ submissionId, onClose, onUpdate }) => {
             setIsLoading(true);
             setError('');
             try {
-                console.log('Token:', localStorage.getItem('token'));
+                // console.log('Token:', localStorage.getItem('token'));
                 // API call to get details for a single submission
                 const response = await API.get(`/submissions/${submissionId}`);
                 setSubmission(response.data);

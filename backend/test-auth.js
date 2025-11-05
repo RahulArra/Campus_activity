@@ -14,7 +14,7 @@ const testUser = {
 async function testSignup() {
     try {
         const response = await axios.post(`${API_URL}/auth/signup`, testUser);
-        console.log('Signup Success:', response.data);
+        // console.log('Signup Success:', response.data);
         return true;
     } catch (error) {
         if (error.response?.data?.message === 'User already exists with this email') {
@@ -34,8 +34,8 @@ async function testLogin() {
             password: testUser.password
         });
         console.log('Login Success!');
-        console.log('Token:', response.data.token);
-        console.log('User:', response.data.user);
+        // console.log('Token:', response.data.token);
+        // console.log('User:', response.data.user);
         return response.data.token;
     } catch (error) {
         console.error('Login Error:', error.response?.data || error.message);
@@ -51,7 +51,7 @@ async function testProtectedRoute(token) {
                 'Authorization': `Bearer ${token}`
             }
         });
-        console.log('Protected Route Success! Got', response.data.length, 'templates');
+        // console.log('Protected Route Success! Got', response.data.length, 'templates');
     } catch (error) {
         console.error('Protected Route Error:', error.response?.data || error.message);
     }
@@ -59,19 +59,19 @@ async function testProtectedRoute(token) {
 
 // Run all tests
 async function runTests() {
-    console.log('🏃 Starting Auth Tests...');
-    console.log('\n1. Testing Signup...');
+    // console.log('🏃 Starting Auth Tests...');
+    // console.log('\n1. Testing Signup...');
     await testSignup();
     
-    console.log('\n2. Testing Login...');
+    // console.log('\n2. Testing Login...');
     const token = await testLogin();
     
     if (token) {
-        console.log('\n3. Testing Protected Route...');
+        // console.log('\n3. Testing Protected Route...');
         await testProtectedRoute(token);
     }
     
-    console.log('\n✅ Tests Complete!');
+    // console.log('\n✅ Tests Complete!');
 }
 
 // Run the tests

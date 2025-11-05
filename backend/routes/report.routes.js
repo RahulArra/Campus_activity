@@ -108,7 +108,7 @@ router.get('/department/:dept/export', verifyToken, async (req, res) => {
       return false;
     });
 
-    console.log(`Export: found ${activities.length} activities for department=${dept}`);
+    // console.log(`Export: found ${activities.length} activities for department=${dept}`);
 
     if (format.toLowerCase() === 'csv') {
       // Generate CSV
