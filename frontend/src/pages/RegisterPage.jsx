@@ -6,7 +6,7 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import StyledInput from '../components/ui/StyledInput'; // Your reusable input
 import { API } from '../stores/authStore'; // Your configured Axios instance
 
-// Mock Departments list for the Select input (should eventually come from an API)
+// Mock Departments list
 const DEPARTMENTS = [
   { value: 'CSE', label: 'Computer Science' },
   { value: 'ECE', label: 'Electronics & Comm.' },
@@ -14,32 +14,35 @@ const DEPARTMENTS = [
   { value: 'IT', label: 'Information Technology' },
 ];
 
-// Mock Roles list
-const ROLES = [
-  { value: 'user', label: 'User' },
-  { value: 'admin', label: 'Admin' },
-];
-
 const RegisterPage = () => {
-  const { handleSubmit, control, setError, reset, formState: { isSubmitting } } = useForm();
+  // 1. UPDATED useForm destructuring
+  const { 
+    handleSubmit, 
+    control, 
+    setError, 
+    clearErrors, // <-- Added
+    reset, 
+    formState: { isSubmitting, errors } // <-- Added 'errors'
+  } = useForm();
+  
   const navigate = useNavigate();
   const [successMessage, setSuccessMessage] = useState(null);
 
-  // Reset form state when component mounts
   React.useEffect(() => {
     reset();
   }, [reset]);
 
+  // 2. UPDATED onSubmit function
   const onSubmit = async (data) => {
     setSuccessMessage(null);
+    clearErrors('apiError'); // <-- Moved here and changed to clearErrors
+    
     try {
-      // Clear any previous errors first
-      setError('apiError', null);
-
-      // Call signup API
-      await API.post('/auth/signup', { 
+      // Call signup API with default role as 'user'
+      await API.post('/auth/signup', {
         ...data,
-      }); 
+        role: 'user'
+      });
 
       // Show success message and redirect
       setSuccessMessage('Registration successful! Redirecting to login...');
@@ -49,15 +52,15 @@ const RegisterPage = () => {
 
     } catch (error) {
       console.error('Registration Error:', error);
-      
-      const errorMessage = error.response?.data?.message || 
-        (error.message === 'Network Error' 
-          ? 'Cannot connect to the server. Please try again.' 
+
+      const errorMessage = error.response?.data?.message ||
+        (error.message === 'Network Error'
+          ? 'Cannot connect to the server. Please try again.'
           : 'Registration failed. Please check your details and try again.');
 
-      setError('apiError', { 
-        type: 'manual', 
-        message: errorMessage 
+      setError('apiError', {
+        type: 'manual',
+        message: errorMessage
       });
     }
   };
@@ -85,67 +88,67 @@ const RegisterPage = () => {
           </Alert>
         )}
 
-        {control._formState.errors.apiError && (
+        {/* 3. UPDATED Error Alert */}
+        {errors.apiError && (
           <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-            {control._formState.errors.apiError.message}
+            {errors.apiError.message}
           </Alert>
         )}
 
         <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ mt: 1, width: '100%' }}>
           {/* Name Input */}
           <Controller
-  name="name"
-  control={control}
-  defaultValue=""
-  rules={{ required: 'Full Name is required' }}
-  render={({ field, fieldState: { error } }) => (
-    <StyledInput
-      {...field}
-      label="Full Name"
-      error={!!error}
-      helperText={error ? error.message : null}
-    />
-  )}
-/>
+            name="name"
+            control={control}
+            defaultValue=""
+            rules={{ required: 'Full Name is required' }}
+            render={({ field, fieldState: { error } }) => (
+              <StyledInput
+                {...field}
+                label="Full Name"
+                error={!!error}
+                helperText={error ? error.message : null}
+              />
+            )}
+          />
 
-<Controller
-  name="email"
-  control={control}
-  defaultValue=""
-  rules={{ required: 'Email is required' }}
-  render={({ field, fieldState: { error } }) => (
-    <StyledInput
-      {...field}
-      label="Email Address"
-      type="email"
-      error={!!error}
-      helperText={error ? error.message : null}
-    />
-  )}
-/>
+          <Controller
+            name="email"
+            control={control}
+            defaultValue=""
+            rules={{ required: 'Email is required' }}
+            render={({ field, fieldState: { error } }) => (
+              <StyledInput
+                {...field}
+                label="Email Address"
+                type="email"
+                error={!!error}
+                helperText={error ? error.message : null}
+              />
+            )}
+          />
 
-<Controller
-  name="password"
-  control={control}
-  defaultValue=""
-  rules={{ required: 'Password is required' }}
-  render={({ field, fieldState: { error } }) => (
-    <StyledInput
-      {...field}
-      label="Password"
-      type="password"
-      error={!!error}
-      helperText={error ? error.message : null}
-    />
-  )}
-/>
-
+          <Controller
+            name="password"
+            control={control}
+            defaultValue=""
+            rules={{ required: 'Password is required' }}
+            render={({ field, fieldState: { error } }) => (
+              <StyledInput
+                {...field}
+                label="Password"
+                type="password"
+                error={!!error}
+                helperText={error ? error.message : null}
+              />
+            )}
+          />
 
           {/* Department Select Input */}
           <Controller
             name="department"
             control={control}
-            defaultValue={DEPARTMENTS[0].value}
+            defaultValue={DEPARTMENTS[0].value} // Set a default value
             rules={{ required: 'Department is required' }}
             render={({ field, fieldState: { error } }) => (
               <StyledInput
@@ -156,29 +159,6 @@ const RegisterPage = () => {
                 helperText={error ? error.message : null}
               >
                 {DEPARTMENTS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </StyledInput>
-            )}
-          />
-
-          {/* Role Select Input */}
-          <Controller
-            name="role"
-            control={control}
-            defaultValue={ROLES[0].value}
-            rules={{ required: 'Role is required' }}
-            render={({ field, fieldState: { error } }) => (
-              <StyledInput
-                {...field}
-                select
-                label="Role"
-                error={!!error}
-                helperText={error ? error.message : null}
-              >
-                {ROLES.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
                     {option.label}
                   </MenuItem>
