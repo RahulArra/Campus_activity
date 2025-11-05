@@ -226,48 +226,25 @@ router.get('/department/:dept/export', verifyToken, async (req, res) => {
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=department_${dept}_report.pdf`);
-      
-async function getChromePath() {
-  const base = '/opt/render/project/.render-cache';
-  const chromeRoot = path.join(base, 'chrome');
-  if (fs.existsSync(chromeRoot)) {
-    const versions = fs.readdirSync(chromeRoot);
-    if (versions.length > 0) {
-      versions.sort();
-      const latest = versions[versions.length - 1];
-      const chromePath = path.join(chromeRoot, latest, 'chrome-linux64', 'chrome');
-      if (fs.existsSync(chromePath)) return chromePath;
-    }
-  }
-  return null;
-}
+      const browser = await puppeteer.launch({
+        headless: true, // 'new' is default in newer versions, but true is fine
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage', // Good for limited-memory environments
+          '--disable-gpu' // Often needed in servers
+        ]
+      });
+      // 🛑 REMOVED: executablePath: chromePath || undefined,
 
-const chromePath = await getChromePath();
-console.log('Resolved Chrome path:', chromePath);
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdf = await page.pdf({ format: 'A4', printBackground: true });
+      await browser.close();
 
-const browser = await puppeteer.launch({
-  headless: true,
-  executablePath: chromePath || undefined,
-  args: [
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--disable-dev-shm-usage',
-    '--disable-accelerated-2d-canvas',
-    '--no-first-run',
-    '--no-zygote',
-    '--single-process',
-    '--disable-gpu'
-  ]
-});
-
-const page = await browser.newPage();
-await page.setContent(html, { waitUntil: 'networkidle0' });
-const pdf = await page.pdf({ format: 'A4', printBackground: true });
-await browser.close();
-
-res.setHeader('Content-Type', 'application/pdf');
-res.setHeader('Content-Disposition', `attachment; filename=department_${dept}_report.pdf`);
-return res.send(pdf);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=department_${dept}_report.pdf`);
+      return res.send(pdf);
 
     }
   } catch (err) {
