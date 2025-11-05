@@ -121,7 +121,7 @@ const LoginPage = () => {
             {isSubmitting ? 'Signing In...' : 'Sign In'}
           </Button>
           <MUILink component={Link} to="/register" variant="body2" color="secondary" sx={{ display: 'block', textAlign: 'center' }}>
-            Don't have an account? Register [cite: 9]
+            Don't have an account? Register 
           </MUILink>
         </Box>
       </Box>

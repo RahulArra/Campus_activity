@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Filter, Download, User, Calendar, Table2, CheckCircle, XCircle, Clock, FileText, Loader2 } from 'lucide-react';
 import axios from 'axios'; 
 import SubmissionDetailModal from './SubmissionDetailModal'; // Adjust path if needed
@@ -40,7 +40,7 @@ const AdminSubmissionsView = () => {
     const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
     // --- API CALLS ---
 
-    const loadSubmissions = async () => {
+    const loadSubmissions = useCallback(async () => {
         setIsLoading(true);
         const apiFilters = { ...filters };
         if (apiFilters.status === 'All') { delete apiFilters.status; }
@@ -49,9 +49,7 @@ const AdminSubmissionsView = () => {
         });
 
         try {
-
-const response = await API.get('http://localhost:5000/api/submissions', { params: apiFilters });
-
+            const response = await API.get('http://localhost:5000/api/submissions', { params: apiFilters });
             setSubmissions(response.data); 
             console.log(response.data);
         } catch (error) {
@@ -61,7 +59,7 @@ const response = await API.get('http://localhost:5000/api/submissions', { params
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [filters]);
     const handleStatusUpdate = () => {
         loadSubmissions(); // Simply reload the list
     };
@@ -84,13 +82,30 @@ const response = await axios.get('http://localhost:5000/api/templates');
 
         try {
             console.log(`Starting export for ${format} with filters:`, filters);
-            const response = await axios.get(`http://localhost:5000/api/exports/${format.toLowerCase()}`, { params: filters, responseType: 'blob' });
+            let endpoint;
+            if (filters.department) {
+                endpoint = `http://localhost:5000/api/reports/department/${filters.department}/export`;
+            } else {
+                alert('Please select a department to export.');
+                setIsExporting(false);
+                return;
+            }
+
+            const response = await API.get(endpoint, { 
+                params: { 
+                    ...apiFilters,
+                    format: format.toLowerCase(),
+                    dateFrom: filters.dateRangeFrom,
+                    dateTo: filters.dateRangeTo
+                }, 
+                responseType: 'blob' 
+            });
             console.log(`Export ${format} response received:`, response);
 
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            const filename = `CAPS_Report_${format}_${new Date().toISOString().split('T')[0]}.${format.toLowerCase()}`;
+            const filename = `CAPS_Report_${filters.department}_${format}_${new Date().toISOString().split('T')[0]}.${format.toLowerCase()}`;
             link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
@@ -125,7 +140,7 @@ const response = await axios.get('http://localhost:5000/api/templates');
             loadSubmissions();
         }, 300); 
         return () => clearTimeout(handler);
-    }, [filters]);
+    }, [filters, loadSubmissions]);
 
 
     // --- RENDERING LOGIC ---

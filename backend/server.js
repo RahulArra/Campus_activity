@@ -41,7 +41,7 @@ app.use('/api/templates', templateRoutes);
 app.use('/api/submissions', submissionRoutes); // <-- ADD THIS LINE
 app.use('/api/uploads', uploadsRouter);
 app.use('/api/reports', reportsRouter);
-app.use('/api/reports', exportsRouter);
+app.use('/api/exports', exportsRouter);
 
 app.use((err, req, res, next) => {
   // Multer fileFilter will call next(err)

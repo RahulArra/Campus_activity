@@ -1,7 +1,7 @@
 // routes/exports.js
 const express = require('express');
 const router = express.Router();
-const Activity = require('../models/ActivitySubmission');
+const Activity = require('../models/submission.model.js');
 const { authenticateJWT: verifyToken } = require('../middleware/auth.middleware.js');
 const { Parser } = require('json2csv');
 const dayjs = require('dayjs');

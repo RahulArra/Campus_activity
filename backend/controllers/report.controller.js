@@ -1,4 +1,4 @@
-const ActivitySubmission = require('../models/ActivitySubmission');
+const ActivitySubmission = require('../models/submission.model');
 const mongoose = require('mongoose');
 const dayjs = require('dayjs');
 

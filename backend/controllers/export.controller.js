@@ -1,4 +1,4 @@
-const ActivitySubmission = require('../models/ActivitySubmission');
+const ActivitySubmission = require('../models/submission.model');
 const { Parser } = require('json2csv');
 const dayjs = require('dayjs');
 const puppeteer = require('puppeteer');
