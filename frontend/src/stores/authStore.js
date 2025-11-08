@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Create a basic Axios instance with your backend URL (Naveen's server)
 export const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL, // Assume backend runs on port 5000
+  baseURL: process.env.REACT_APP_API_URL , // Assume backend runs on port 5000
 });
 
 // Axios interceptor to automatically attach the token

@@ -1,12 +1,11 @@
-// routes/reports.js
 const express = require('express');
 const router = express.Router();
 const Activity = require('../models/submission.model.js');
+const User = require('../models/user.model.js');
 const { authenticateJWT: verifyToken } = require('../middleware/auth.middleware.js');
 const dayjs = require('dayjs');
-const fs = require('fs');
-const path = require('path');
-const puppeteer = require('puppeteer'); // 👈 ADD THIS LINE
+const PDFDocument = require('pdfkit');
+
 // Helper to build date filter
 function buildDateRange(from, to) {
   if (!from && !to) return null;
@@ -16,7 +15,137 @@ function buildDateRange(from, to) {
   return range;
 }
 
-// GET /api/reports/student/:studentId
+// --- PDF HELPER FUNCTIONS ---
+
+// Draws the border on any page
+function drawBorder(doc) {
+  const page = doc.page;
+  doc.strokeColor('black')
+     .lineWidth(1)
+     .rect(30, 30, page.width - 60, page.height - 60)
+     .stroke();
+}
+
+// --- MODIFIED: drawHeader now accepts 'dept' ---
+function drawHeader(doc, dept) {
+  const page = doc.page;
+  doc.fillColor('black')
+     .font('Helvetica-Bold')
+     .fontSize(16)
+     .text('Chaitanya Bharathi Institute of Technology', 30, 45, { align: 'center' });
+  
+  doc.font('Helvetica')
+     .fontSize(10)
+     .text('Autonomous educational institution based out of Hyderabad, India', 30, 68, { align: 'center' });
+     
+  // --- ADDED: Department Name ---
+  doc.font('Helvetica-Bold')
+     .fontSize(12)
+     .text(`Department Report - ${dept.toUpperCase()}`, 30, 90, { align: 'center' });
+
+  doc.moveTo(30, 110) // Moved line down
+     .lineTo(page.width - 30, 110)
+     .lineWidth(0.5)
+     .strokeColor('grey')
+     .stroke();
+}
+
+// Draws the footer (with page number) on any page
+function drawFooter(doc) {
+  const page = doc.page;
+  // This logic correctly gets the current page number
+  const pageNumber = doc.bufferedPageRange().start + doc.bufferedPageRange().count - 1;
+
+  doc.fontSize(8)
+     .font('Helvetica')
+     .fillColor('grey')
+     .text(`Page ${pageNumber + 1}`, // page numbers are 0-indexed
+          30, 
+          page.height - 45, 
+          { align: 'right', width: page.width - 60 });
+}
+
+// Draws the static header for the table
+function drawTableHeader(doc, y) {
+  doc.fontSize(9).font('Helvetica-Bold');
+  
+  const col1_x = 40;
+  const col2_x = 100;
+  const col3_x = 190;
+  const col4_x = 260;
+  const col5_x = 390;
+  const col6_x = 450;
+  const col7_x = 510;
+  const col8_x = 660;
+
+  doc.text('Roll No', col1_x, y, { width: 60 });
+  doc.text('Student Name', col2_x, y, { width: 90 });
+  doc.text('Department', col3_x, y, { width: 70 });
+  doc.text('Activity Type', col4_x, y, { width: 130 });
+  doc.text('Start Date', col5_x, y, { width: 60 });
+  doc.text('End Date', col6_x, y, { width: 60 });
+  doc.text('Proof Links', col7_x, y, { width: 150 });
+  doc.text('Status', col8_x, y, { width: 60 });
+  
+  const tableBottom = y + doc.heightOfString('X', { width: 60 }) + 3;
+  doc.moveTo(col1_x, tableBottom)
+     .lineTo(doc.page.width - 40, tableBottom)
+     .lineWidth(0.5)
+     .strokeColor('black')
+     .stroke();
+     
+  doc.fillColor('black');
+  return tableBottom + 5;
+}
+
+// Draws a single row in the table
+function drawTableRow(doc, activity, y) {
+  doc.fontSize(8).font('Helvetica');
+
+  const col1_x = 40;
+  const col2_x = 100;
+  const col3_x = 190;
+  const col4_x = 260;
+  const col5_x = 390;
+  const col6_x = 450;
+  const col7_x = 510;
+  const col8_x = 660;
+  
+  const activityData = activity.data || {};
+  const endDate = activityData.endDate || activityData.completionDate || '';
+
+  doc.text(activity.userId?.rollno || 'Unknown', col1_x, y, { width: 60 });
+  doc.text(activity.userId?.name || 'Unknown', col2_x, y, { width: 90 });
+  doc.text(activity.department || activity.userId?.department || 'Unknown', col3_x, y, { width: 70 });
+  doc.text(activity.templateId?.templateName || 'Unknown Activity', col4_x, y, { width: 130 });
+  doc.text(new Date(activity.createdAt).toLocaleDateString(), col5_x, y, { width: 60 });
+  doc.text(endDate ? new Date(endDate).toLocaleDateString() : '', col6_x, y, { width: 60 });
+  doc.text(activity.status || '', col8_x, y, { width: 60 });
+
+  let proofStartY = y;
+  (activity.proofs || []).forEach(proof => {
+    doc.fillColor('blue')
+       .text(proof.filename || 'View Document', col7_x, proofStartY, {
+          width: 150,
+          link: proof.url,
+          underline: true,
+          lineBreak: false,
+       });
+    proofStartY += 12;
+  });
+  doc.fillColor('black');
+
+  const rowHeight = Math.max(
+    doc.heightOfString(activity.templateId?.templateName || 'Unknown', { width: 130 }),
+    (proofStartY - y)
+  );
+
+  return y + rowHeight + 10;
+}
+
+// --- API ROUTES ---
+
+// (Unchanged JSON routes)
 router.get('/student/:studentId', verifyToken, async (req, res) => {
   const { studentId } = req.params;
   const { from, to, page = 1, limit = 50 } = req.query;
@@ -24,21 +153,15 @@ router.get('/student/:studentId', verifyToken, async (req, res) => {
     const dateRange = buildDateRange(from, to);
     const query = { studentId };
     if (dateRange) query.date = dateRange;
-
-    const docs = await Activity.find(query)
-      .sort({ date: -1 })
-      .skip((page-1)*limit)
-      .limit(parseInt(limit))
-      .lean();
-
-    return res.status(200).json({ total: docs.length, data: docs });
+    const docs = await Activity.find(query).sort({ date: -1 }).skip((page - 1) * limit).limit(parseInt(limit)).lean();
+    const total = await Activity.countDocuments(query);
+    return res.status(200).json({ total, data: docs });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: 'Failed to fetch student report' });
   }
 });
 
-// GET /api/reports/activity/:templateId
 router.get('/activity/:templateId', verifyToken, async (req, res) => {
   const { templateId } = req.params;
   const { from, to, page = 1, limit = 50 } = req.query;
@@ -46,91 +169,73 @@ router.get('/activity/:templateId', verifyToken, async (req, res) => {
     const dateRange = buildDateRange(from, to);
     const query = { templateId };
     if (dateRange) query.date = dateRange;
-
-    const docs = await Activity.find(query).sort({ date: -1 }).skip((page-1)*limit).limit(parseInt(limit)).lean();
-    return res.status(200).json({ total: docs.length, data: docs });
+    const docs = await Activity.find(query).sort({ date: -1 }).skip((page - 1) * limit).limit(parseInt(limit)).lean();
+    const total = await Activity.countDocuments(query);
+    return res.status(200).json({ total, data: docs });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: 'Failed to fetch activity report' });
   }
 });
 
-// GET /api/reports/department/:dept
 router.get('/department/:dept', verifyToken, async (req, res) => {
   const { dept } = req.params;
   const { from, to, page = 1, limit = 50 } = req.query;
   try {
     const dateRange = buildDateRange(from, to);
-    const query = {};
+    const userQuery = { department: new RegExp(`^${dept}$`, 'i') };
+    const usersInDept = await User.find(userQuery).select('_id').lean();
+    const userIds = usersInDept.map(u => u._id);
+    const query = {
+      $or: [{ userId: { $in: userIds } }, { department: new RegExp(`^${dept}$`, 'i') }]
+    };
     if (dateRange) query.createdAt = dateRange;
-
-    // fetch submissions and populate user to filter by department
-    let docs = await Activity.find(query)
-      .sort({ createdAt: -1 })
-      .skip((page-1)*limit)
-      .limit(parseInt(limit))
-      .populate('userId', 'name department')
-      .lean();
-
-    docs = docs.filter(d => {
-      if (!d) return false;
-      if (d.userId && d.userId.department && d.userId.department.toLowerCase() === dept.toLowerCase()) return true;
-      if (d.department && d.department.toLowerCase() === dept.toLowerCase()) return true; // fallback
-      return false;
-    });
-
-    return res.status(200).json({ total: docs.length, data: docs });
+    const docs = await Activity.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(parseInt(limit)).populate('userId', 'name department rollno').lean();
+    const total = await Activity.countDocuments(query);
+    return res.status(200).json({ total, data: docs });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: 'Failed to fetch department report' });
   }
 });
 
-// GET /api/reports/department/:dept/export
+
+// --- EXPORT ROUTE ---
 router.get('/department/:dept/export', verifyToken, async (req, res) => {
   const { dept } = req.params;
   const { format = 'pdf', from, to } = req.query;
   
   try {
+    // 1. Get Data
     const dateRange = buildDateRange(from, to);
-    const query = {};
+    const userQuery = { department: new RegExp(`^${dept}$`, 'i') };
+    const usersInDept = await User.find(userQuery).select('_id').lean();
+    const userIds = usersInDept.map(u => u._id);
+    const query = {
+      $or: [{ userId: { $in: userIds } }, { department: new RegExp(`^${dept}$`, 'i') }]
+    };
     if (dateRange) query.createdAt = dateRange;
 
     let activities = await Activity.find(query)
       .sort({ createdAt: -1 })
       .populate('templateId', 'templateName')
-      .populate('userId', 'name department')
+      .populate('userId', 'name department rollno')
       .lean();
-
-    // Filter by department using the populated user or fallback to activity.department
-    activities = activities.filter(a => {
-      if (!a) return false;
-      if (a.userId && a.userId.department && a.userId.department.toLowerCase() === dept.toLowerCase()) return true;
-      if (a.department && a.department.toLowerCase() === dept.toLowerCase()) return true;
-      return false;
-    });
 
     console.log(`Export: found ${activities.length} activities for department=${dept}`);
 
     if (format.toLowerCase() === 'csv') {
-      // Generate CSV
+      // 2. CSV Logic (Unchanged)
       const csvRows = [
-        ['ID', 'Student Name', 'Department', 'Activity Type', 'Start Date', 'End Date', 'Proof Links', 'Status']
+        ['Roll No', 'Student Name', 'Department', 'Activity Type', 'Start Date', 'End Date', 'Proof Links', 'Status']
       ];
-
       activities.forEach(activity => {
-        // Get proof links formatted as Excel hyperlinks
-        const proofLinks = (activity.proofs || [])
-          .map(proof => `=HYPERLINK("${proof.url}","${proof.filename || 'View Document'}")`)
-          .join('\n');
-        
-        // Get activity dates from form data
+        const proofLinks = (activity.proofs || []).map(proof => `=HYPERLINK("${proof.url}","${proof.filename || 'View Document'}")`).join('\n');
         const activityData = activity.data || {};
         const endDate = activityData.endDate || activityData.completionDate || '';
-
         csvRows.push([
-          activity._id,
-          activity.userId?.name || activity.studentName || 'Unknown',
+          activity.userId?.rollno || 'Unknown', 
+          activity.userId?.name || 'Unknown',
           activity.department || activity.userId?.department || 'Unknown',
           activity.templateId?.templateName || 'Unknown Activity',
           new Date(activity.createdAt).toLocaleDateString(),
@@ -139,114 +244,57 @@ router.get('/department/:dept/export', verifyToken, async (req, res) => {
           activity.status || ''
         ]);
       });
-
-      // Simple CSV escaping and CRLF line endings so Excel opens rows correctly
       const escapeCsv = (val) => {
         if (val === null || val === undefined) return '';
         const s = String(val);
-        if (s.includes('"') || s.includes(',') || s.includes('\n') || s.includes('\r')) {
-          return `"${s.replace(/"/g, '""')}"`;
-        }
+        if (s.includes('"') || s.includes(',') || s.includes('\n') || s.includes('\r')) return `"${s.replace(/"/g, '""')}"`;
         return s;
       };
-
-      // Add UTF-8 BOM so Excel recognizes encoding, and use CRLF for row separators
       const csv = '\uFEFF' + csvRows.map(row => row.map(escapeCsv).join(',')).join('\r\n');
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename=department_${dept}_report.csv`);
       return res.send(csv);
+
     } else {
-      // Generate PDF
-      const html = `
-        <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; }
-              table { width: 100%; border-collapse: collapse; }
-              th, td { padding: 8px; border: 1px solid #ddd; }
-              th { background-color: #f4f4f4; }
-              a { color: #0066cc; text-decoration: underline; }
-              .proof-link {
-                display: inline-block;
-                margin: 2px 0;
-                padding: 2px 5px;
-                background: #f0f9ff;
-                border: 1px solid #cce5ff;
-                border-radius: 3px;
-                color: #0066cc;
-                text-decoration: none;
-              }
-              .proof-link:hover {
-                background: #e6f3ff;
-              }
-            </style>
-          </head>
-          <body>
-            <h1>Department Report - ${dept}</h1>
-            <p>Generated on: ${new Date().toLocaleDateString()}</p>
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Student Name</th>
-                  <th>Department</th>
-                  <th>Activity Type</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
-                  <th>Proof Links</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${activities.map(activity => {
-                  const proofLinks = (activity.proofs || [])
-                    .map(proof => `<a class="proof-link" href="${proof.url}" target="_blank" rel="noopener noreferrer">📎 ${proof.filename || 'View Document'}</a>`)
-                    .join('<br>');
-                  
-                  const activityData = activity.data || {};
-                  const endDate = activityData.endDate || activityData.completionDate || '';
-                  
-                  return `
-                    <tr>
-                      <td>${activity._id}</td>
-                      <td>${activity.userId?.name || activity.studentName || 'Unknown'}</td>
-                      <td>${activity.department || activity.userId?.department || 'Unknown'}</td>
-                      <td>${activity.templateId?.templateName || 'Unknown Activity'}</td>
-                      <td>${new Date(activity.createdAt).toLocaleDateString()}</td>
-                      <td>${endDate ? new Date(endDate).toLocaleDateString() : ''}</td>
-                      <td>${proofLinks}</td>
-                      <td>${activity.status || ''}</td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          </body>
-        </html>
-      `;
-
+      // 3. PDFKIT TEMPLATE LOGIC
+      
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=department_${dept}_report.pdf`);
-      const browser = await puppeteer.launch({
-        headless: true, // 'new' is default in newer versions, but true is fine
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage', // Good for limited-memory environments
-          '--disable-gpu' // Often needed in servers
-        ]
+      
+      const doc = new PDFDocument({ 
+        margin: 30, 
+        size: 'A4', 
+        layout: 'landscape'
       });
-      // 🛑 REMOVED: executablePath: chromePath || undefined,
+      
+      // --- MODIFIED: Pass 'dept' to the header on new pages ---
+      doc.on('pageAdded', () => {
+        drawBorder(doc);
+        drawHeader(doc, dept); // <-- Pass dept
+        drawFooter(doc);
+      });
+      
+      doc.pipe(res);
+      
+      // --- Draw Page 1 Template ---
+      drawBorder(doc);
+      drawHeader(doc, dept); // <-- Pass dept
+      drawFooter(doc);
+      
+      // --- Draw Table Content ---
+      let tableTop = 120; // <-- Adjusted start position for table
+      let rowY = drawTableHeader(doc, tableTop);
+      const pageBottom = doc.page.height - 50;
+      
+      for (const activity of activities) {
+        if (rowY + 50 > pageBottom) {
+          doc.addPage();
+          rowY = drawTableHeader(doc, 120); // <-- Adjusted start position
+        }
+        rowY = drawTableRow(doc, activity, rowY);
+      }
 
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      const pdf = await page.pdf({ format: 'A4', printBackground: true });
-      await browser.close();
-
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename=department_${dept}_report.pdf`);
-      return res.send(pdf);
-
+      doc.end();
     }
   } catch (err) {
     console.error('Export error:', err);

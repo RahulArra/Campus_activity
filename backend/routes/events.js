@@ -1,7 +1,8 @@
 // append to routes/exports.js or separate file
 const express = require('express');
 const router = express.Router();
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core'); // <-- MUST BE 'puppeteer-core'
+const chromium = require('@sparticuz/chromium');
 const dayjs = require('dayjs');
 const Activity = require('../models/ActivitySubmission');
 const { authenticateJWT: verifyToken } = require('../middleware/auth.middleware.js');

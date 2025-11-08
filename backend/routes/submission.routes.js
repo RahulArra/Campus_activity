@@ -58,7 +58,7 @@ router.get('/', authenticateJWT, async (req, res) => {
     // 3. Find all submissions that match the filter
 const submissions = await Submission.find(filter)
   .populate('templateId', 'templateName templateCategory')
-  .populate('userId', 'name department email')  // ✅ Added user details
+  .populate('userId', 'name department email rollno')  // ✅ Added user details
   .sort({ createdAt: -1 });
 
 
@@ -77,7 +77,7 @@ router.get('/:id', authenticateJWT, async (req, res) => {
     // 1. Find the submission by its ID from the URL parameters
     const submission = await Submission.findById(req.params.id)
       .populate('templateId', 'templateName templateCategory')
-      .populate('userId', 'name email department'); // Also get the user's name/email
+      .populate('userId', 'name email department rollno'); // Also get the user's name/email
 
     // 2. Check if the submission exists
     if (!submission) {

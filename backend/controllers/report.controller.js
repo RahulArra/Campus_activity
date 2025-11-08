@@ -64,6 +64,7 @@ const getDepartmentReport = async (req, res) => {
     if (dateRange) query.date = dateRange;
 
     const docs = await ActivitySubmission.find(query)
+      .populate('studentId', 'rollno')
       .sort({ date: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit))

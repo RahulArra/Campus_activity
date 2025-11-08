@@ -14,15 +14,20 @@ const DEPARTMENTS = [
   { value: 'IT', label: 'Information Technology' },
 ];
 
+// Mock Roles list
+const ROLES = [
+  { value: 'user', label: 'User' },
+  { value: 'admin', label: 'Admin' },
+];
+
 const RegisterPage = () => {
-  // 1. UPDATED useForm destructuring
   const { 
     handleSubmit, 
     control, 
     setError, 
-    clearErrors, // <-- Added
     reset, 
-    formState: { isSubmitting, errors } // <-- Added 'errors'
+    clearErrors, 
+    formState: { isSubmitting, errors } 
   } = useForm();
   
   const navigate = useNavigate();
@@ -32,19 +37,21 @@ const RegisterPage = () => {
     reset();
   }, [reset]);
 
-  // 2. UPDATED onSubmit function
+  // <-- FIX 1: Add this helper function
+  const handleInputChange = (onChange) => (e) => {
+    onChange(e); // Call the original RHF onChange
+    if (errors.apiError) {
+      clearErrors('apiError'); // Clear the API error as the user types
+    }
+  };
+
   const onSubmit = async (data) => {
     setSuccessMessage(null);
-    clearErrors('apiError'); // <-- Moved here and changed to clearErrors
-    
-    try {
-      // Call signup API with default role as 'user'
-      await API.post('/auth/signup', {
-        ...data,
-        role: 'user'
-      });
+    clearErrors('apiError'); // Clear on submit just in case
 
-      // Show success message and redirect
+    try {
+      await API.post('/auth/signup', { ...data }); 
+
       setSuccessMessage('Registration successful! Redirecting to login...');
       setTimeout(() => {
         navigate('/login');
@@ -52,15 +59,15 @@ const RegisterPage = () => {
 
     } catch (error) {
       console.error('Registration Error:', error);
-
-      const errorMessage = error.response?.data?.message ||
-        (error.message === 'Network Error'
-          ? 'Cannot connect to the server. Please try again.'
+      
+      const errorMessage = error.response?.data?.message || 
+        (error.message === 'Network Error' 
+          ? 'Cannot connect to the server. Please try again.' 
           : 'Registration failed. Please check your details and try again.');
 
-      setError('apiError', {
-        type: 'manual',
-        message: errorMessage
+      setError('apiError', { 
+        type: 'manual', 
+        message: errorMessage 
       });
     }
   };
@@ -88,7 +95,6 @@ const RegisterPage = () => {
           </Alert>
         )}
 
-        {/* 3. UPDATED Error Alert */}
         {errors.apiError && (
           <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
             {errors.apiError.message}
@@ -105,6 +111,7 @@ const RegisterPage = () => {
             render={({ field, fieldState: { error } }) => (
               <StyledInput
                 {...field}
+                onChange={handleInputChange(field.onChange)} // <-- FIX 2: Apply handler
                 label="Full Name"
                 error={!!error}
                 helperText={error ? error.message : null}
@@ -120,8 +127,25 @@ const RegisterPage = () => {
             render={({ field, fieldState: { error } }) => (
               <StyledInput
                 {...field}
+                onChange={handleInputChange(field.onChange)} // <-- FIX 3: Apply handler
                 label="Email Address"
                 type="email"
+                error={!!error}
+                helperText={error ? error.message : null}
+              />
+            )}
+          />
+
+          <Controller
+            name="rollno"
+            control={control}
+            defaultValue=""
+            rules={{ required: 'Roll Number is required' }}
+            render={({ field, fieldState: { error } }) => (
+              <StyledInput
+                {...field}
+                onChange={handleInputChange(field.onChange)} // <-- FIX 4: Apply handler
+                label="Roll Number"
                 error={!!error}
                 helperText={error ? error.message : null}
               />
@@ -136,6 +160,7 @@ const RegisterPage = () => {
             render={({ field, fieldState: { error } }) => (
               <StyledInput
                 {...field}
+                onChange={handleInputChange(field.onChange)} // <-- FIX 5: Apply handler
                 label="Password"
                 type="password"
                 error={!!error}
@@ -148,17 +173,42 @@ const RegisterPage = () => {
           <Controller
             name="department"
             control={control}
-            defaultValue={DEPARTMENTS[0].value} // Set a default value
+            defaultValue={DEPARTMENTS[0].value}
             rules={{ required: 'Department is required' }}
             render={({ field, fieldState: { error } }) => (
               <StyledInput
                 {...field}
+                onChange={handleInputChange(field.onChange)} // <-- FIX 6: Apply handler
                 select
                 label="Department"
                 error={!!error}
                 helperText={error ? error.message : null}
               >
                 {DEPARTMENTS.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </StyledInput>
+            )}
+          />
+
+          {/* Role Select Input */}
+          <Controller
+            name="role"
+            control={control}
+            defaultValue={ROLES[0].value}
+            rules={{ required: 'Role is required' }}
+            render={({ field, fieldState: { error } }) => (
+              <StyledInput
+                {...field}
+                onChange={handleInputChange(field.onChange)} // <-- FIX 7: Apply handler
+                select
+                label="Role"
+                error={!!error}
+                helperText={error ? error.message : null}
+              >
+                {ROLES.map((option) => (
                   <MenuItem key={option.value} value={option.value}>
                     {option.label}
                   </MenuItem>

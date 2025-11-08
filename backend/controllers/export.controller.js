@@ -1,7 +1,8 @@
 const ActivitySubmission = require('../models/submission.model');
 const { Parser } = require('json2csv');
 const dayjs = require('dayjs');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core'); // <-- MUST BE 'puppeteer-core'
+const chromium = require('@sparticuz/chromium');
 
 const exportStudentCSV = async (req, res) => {
   const { id } = req.params;
@@ -16,12 +17,13 @@ const exportStudentCSV = async (req, res) => {
     const query = { studentId: id };
     if (Object.keys(dateRange).length) query.date = dateRange;
 
-    const docs = await ActivitySubmission.find(query).lean();
+    const docs = await ActivitySubmission.find(query).populate('studentId', 'rollno').lean();
 
     const fields = [
       { label: 'Submission ID', value: '_id' },
       { label: 'Student ID', value: 'studentId' },
       { label: 'Student Name', value: 'studentName' },
+      { label: 'Roll No', value: row => row.studentId ? row.studentId.rollno : '' },
       { label: 'Title', value: 'title' },
       { label: 'Department', value: 'department' },
       { label: 'Date', value: row => dayjs(row.date).format('YYYY-MM-DD') },
@@ -54,12 +56,13 @@ const exportDepartmentPDF = async (req, res) => {
     const query = { department: dept };
     if (Object.keys(dateRange).length) query.date = dateRange;
 
-    const docs = await ActivitySubmission.find(query).lean();
+    const docs = await ActivitySubmission.find(query).populate('studentId', 'rollno').lean();
 
     const rowsHtml = docs.map(d => `
       <tr>
         <td>${d._id}</td>
         <td>${d.studentName || ''}</td>
+        <td>${d.studentId ? d.studentId.rollno : ''}</td>
         <td>${d.title || ''}</td>
         <td>${d.templateId || ''}</td>
         <td>${dayjs(d.date).format('YYYY-MM-DD')}</td>
@@ -82,7 +85,7 @@ const exportDepartmentPDF = async (req, res) => {
           <p>Generated: ${dayjs().format('YYYY-MM-DD HH:mm')}</p>
           <table>
             <thead>
-              <tr><th>ID</th><th>Student</th><th>Title</th><th>Template</th><th>Date</th><th>Files</th></tr>
+              <tr><th>ID</th><th>Student</th><th>Roll No</th><th>Title</th><th>Template</th><th>Date</th><th>Files</th></tr>
             </thead>
             <tbody>${rowsHtml}</tbody>
           </table>

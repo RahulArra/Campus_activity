@@ -5,8 +5,8 @@ const Activity = require('../models/submission.model.js');
 const { authenticateJWT: verifyToken } = require('../middleware/auth.middleware.js');
 const { Parser } = require('json2csv');
 const dayjs = require('dayjs');
-const puppeteer = require('puppeteer');
-
+const puppeteer = require('puppeteer-core'); // <-- MUST BE 'puppeteer-core'
+const chromium = require('@sparticuz/chromium');
 // GET /api/reports/student/:id/export?format=csv or pdf
 router.get('/student/:id/export', verifyToken, async (req, res) => {
   const { id } = req.params;
