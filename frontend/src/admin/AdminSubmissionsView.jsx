@@ -182,7 +182,18 @@ const response = await axios.get(`${process.env.REACT_APP_API_URL}/templates`);
         { header: 'ID', accessor: '_id', render: (id) => <span className="text-id">{id.slice(-6)}</span> },
         { header: 'Student', accessor: 'userId', render: (user) => user?.name || 'Unknown User' }, 
         { header: 'Dept.', accessor: 'userId', render: (user) => user?.department || 'N/A' }, 
-        { header: 'Activity', accessor: 'templateId', render: (template) => template?.templateName?.replace(/_/g, ' ') || 'Unknown Template' },
+{ header: 'Activity', accessor: 'templateId', render: (template) => {
+    // If template is an object with templateName
+    if (template?.templateName) {
+        return template.templateName.replace(/_/g, ' ');
+    }
+    // If template is just an ID string, you might need to look it up
+    else if (typeof template === 'string') {
+        const foundTemplate = templateOptions.find(t => t.id === template);
+        return foundTemplate?.name?.replace(/_/g, ' ') || 'Unknown Template';
+    }
+    return 'Unknown Template';
+}},
         { header: 'Date', accessor: 'createdAt', render: (date) => new Date(date).toLocaleDateString() },
   { header: 'Actions', accessor: '_id', render: (id) => ( // Use accessor '_id'
         <div className="flex-space">

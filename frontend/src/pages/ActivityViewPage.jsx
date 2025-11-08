@@ -95,6 +95,7 @@ const ActivityViewPage = () => {
     };
     
     const submissionData = submission.data || {};
+    console.log(submissionData);
     const proofs = submission.proofs || [];
     const activityName = submission.templateName || (submission.templateId?.templateName) || 'Activity Submission'; 
     const submittedDate = submission.createdAt || submission.submittedAt;
@@ -165,7 +166,7 @@ const ActivityViewPage = () => {
                 </Grid>
 
                 {/* --- PROOFS/ATTACHMENTS (Right Column) --- */}
-                <Grid item sx={{ width: { xs: '100%', md: '33.33%' } }}>
+                <Grid item sx={{ width: { xs: '100%', md: '50.33%' } }}>
                     <CustomCard title="Attached Proofs" sx={{ height: '100%' }}>
                         <List>
                             {proofs.length > 0 ? (
