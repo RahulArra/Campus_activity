@@ -7,8 +7,14 @@ import ActivityViewPage from './pages/ActivityViewPage';
 import ActivityAddPage from './pages/ActivityAddPage';
 import PrivateRoute from './components/common/PrivateRoute';
 import PrivateAdminRoute from './components/common/PrivateAdminRoute';
+import PrivateSuperAdminRoute from './components/common/PrivateSuperAdminRoute';
 import AdminTemplateCRUD from './admin/AdminTemplateCRUD';
 import AdminSubmissionsView from './admin/AdminSubmissionsView';
+import SuperAdminLayout from './superadmin/SuperAdminLayout';
+import Departments from './superadmin/Departments';
+import BulkUpload from './superadmin/BulkUpload';
+import Students from './superadmin/Students';
+import Teachers from './superadmin/Teachers';
 
 const App = () => (
   <Router>
@@ -34,8 +40,14 @@ const App = () => (
           </Routes>
         </PrivateAdminRoute>} />
       </Route>
-      {/* Add a route for Rahul's Activity Submission: /activity/add */}
-      <Route path="/activity/add" element={<ActivityAddPage />} />
+
+      {/* Super Admin Routes */}
+      <Route element={<PrivateRoute />}>
+        <Route path="/superadmin/departments" element={<Departments />} />
+        <Route path="/superadmin/bulk-upload" element={<BulkUpload />} />
+        <Route path="/superadmin/students" element={<Students />} />
+        <Route path="/superadmin/teachers" element={<Teachers />} />
+      </Route>
     </Routes>
   </Router>
 );

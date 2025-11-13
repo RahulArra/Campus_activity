@@ -25,6 +25,11 @@ const useAuthStore = create((set, get) => ({
     return user?.role === 'admin';
   },
 
+  isSuperAdmin: () => {
+    const user = get().user;
+    return user?.role === 'superadmin';
+  },
+
   login: (token, user) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));

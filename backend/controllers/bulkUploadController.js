@@ -111,16 +111,22 @@ exports.bulkUpload = async (req, res) => {
         }
 
         // Final summary
+        const successCount = results.length - errors.length;
+        const successData = results.slice(0, successCount); // Get successful rows
+
         console.table({
           total: results.length,
-          success: results.length - errors.length,
+          success: successCount,
           failed: errors.length,
         });
+
+        console.log("Success data being sent:", successData);
 
         res.status(200).json({
           message: "Bulk upload completed",
           total: results.length,
-          success: results.length - errors.length,
+          success: successCount,
+          successData: successData, // Include the actual successful data
           errors,
         });
       });

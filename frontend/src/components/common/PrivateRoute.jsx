@@ -7,17 +7,25 @@ const PrivateRoute = () => {
   const location = useLocation();
 
   // Block access to admin routes for non-admin users
-  // if (isAuthenticated && location.pathname.startsWith('/admin')) {
-  //   const role = user?.role || (user && user.role) || null;
-  //   if (role !== 'admin' && role !== 'superadmin') {
-  //     return <Navigate to="/dashboard" replace />;
-  //   }
-  // }
+  if (isAuthenticated && location.pathname.startsWith('/admin')) {
+    const role = user?.role || (user && user.role) || null;
+    if (role !== 'admin' && role !== 'superadmin') {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
 
-  // Renders the BaseLayout wrapper, and the requested child route (e.g., DashboardPage) 
+  // Block access to super admin routes for non-super-admin users
+  if (isAuthenticated && location.pathname.startsWith('/superadmin')) {
+    const role = user?.role || (user && user.role) || null;
+    if (role !== 'superadmin') {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+
+  // Renders the BaseLayout wrapper, and the requested child route (e.g., DashboardPage)
   return isAuthenticated ? (
     <BaseLayout>
-      <Outlet /> 
+      <Outlet />
     </BaseLayout>
   ) : (
     // If not authenticated, redirect to the login page
