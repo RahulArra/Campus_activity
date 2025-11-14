@@ -32,97 +32,44 @@ router.post('/', authenticateJWT, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
-// --- Get Submissions (Refined Filtering for Admin & User) ---
+
+
+// --- Get Submissions (for the dashboard) ---
 // GET /api/submissions
+// This route now supports filtering by query parameters like ?userId=...
 router.get('/', authenticateJWT, async (req, res) => {
-  // Log incoming request details for debugging
-  console.log(`GET /api/submissions - User Role: ${req.user.role}, Query Params: ${JSON.stringify(req.query)}`);
-
   try {
-    // 1. Initialize filter object for the Submission collection
-    const submissionFilter = {};
-    let usersToFilterBy = null; // Used only if admin filters by department
-
-    // --- Handle Department Filter (Admin Only) ---
-    // If the logged-in user is an admin AND they provided a department filter
-    if (req.user.role === 'admin' && req.query.department) {
-      console.log(`Admin is filtering by department: ${req.query.department}`);
-      try {
-        // Find the ObjectIDs (_id) of all users matching that department
-        const usersInDept = await User.find({ department: req.query.department }, '_id').lean(); // Use .lean() for plain JS objects
-        if (usersInDept.length > 0) {
-          // Store the array of user IDs
-          usersToFilterBy = usersInDept.map(user => user._id);
-          console.log(`Found ${usersToFilterBy.length} users in department ${req.query.department}`);
-        } else {
-          // If no users found in that department, we know there are no submissions to return
-          console.log(`No users found for department filter: ${req.query.department}. Returning empty array.`);
-          return res.json([]); // Return empty results immediately
-        }
-      } catch (userErr) {
-        console.error("Error filtering users by department:", userErr);
-        // Fallback: If user lookup fails, proceed without the department filter
-        // Consider returning an error or just logging it. We'll proceed for now.
-      }
+    // 1. Create a filter object from the query parameters
+    const filter = {};
+    if (req.query.userId) {
+      filter.userId = req.query.userId;
     }
-
-    // --- Build the rest of the submissionFilter ---
     if (req.query.templateId) {
-      submissionFilter.templateId = req.query.templateId;
+      filter.templateId = req.query.templateId;
     }
-    if (req.query.status && req.query.status !== 'All') {
-      submissionFilter.status = req.query.status;
-    }
-    // Date range filtering
-     if (req.query.dateRangeFrom || req.query.dateRangeTo) {
-         submissionFilter.createdAt = {};
-         if (req.query.dateRangeFrom) {
-             submissionFilter.createdAt.$gte = new Date(req.query.dateRangeFrom);
-         }
-         if (req.query.dateRangeTo) {
-             let endDate = new Date(req.query.dateRangeTo);
-             endDate.setHours(23, 59, 59, 999);
-             submissionFilter.createdAt.$lte = endDate;
-         }
-     }
-
-    // --- Apply Security / User Filter ---
+    
+    // 2. Security Check: Make sure a normal user can only get their *own* submissions
     if (req.user.role === 'user') {
-      // REGULAR USER: Force filter to only their own submissions
-      console.log(`User role detected. Forcing filter to userId: ${req.user.id}`);
-      submissionFilter.userId = req.user.id;
-    } else if (req.user.role === 'admin') {
-      // ADMIN: Apply department filter ONLY if users were found
-      if (usersToFilterBy) {
-        submissionFilter.userId = { $in: usersToFilterBy };
-      }
-      // If admin AND no department filter, submissionFilter.userId remains unset,
-      // correctly allowing results from ALL users.
-      console.log("Admin role detected. Applying general filters.");
+      // If they are a normal user, force the filter to only be for their ID
+      filter.userId = req.user.id;
     }
+    // If they are an 'admin', they can query any userId (or none to get all)
 
-    // Log the final filter being sent to MongoDB
-    console.log("Executing Submission.find() with filter:", JSON.stringify(submissionFilter));
+    // 3. Find all submissions that match the filter
+const submissions = await Submission.find(filter)
+  .populate('templateId', 'templateName templateCategory')
+  .populate('userId', 'name department email rollno')  // ✅ Added user details
+  .sort({ createdAt: -1 });
 
-    // 4. Find submissions matching the final filter object
-    const submissions = await Submission.find(submissionFilter)
-      .populate('templateId', 'templateName templateCategory') // Populate template info
-      .populate('userId', 'name department') // <<<--- Populate user info ---<<<
-      .sort({ createdAt: -1 }); // Sort newest first
 
-    console.log(`Query successful. Found ${submissions.length} submissions.`);
-    // Log the structure of the first result to verify population
-    // if (submissions.length > 0) {
-    //   console.log("Sample submission data after populate:", JSON.stringify(submissions[0], null, 2));
-    // }
-
-    res.json(submissions); // Send the results
+    res.json(submissions);
 
   } catch (error) {
-    console.error("Error fetching submissions:", error); // Log the full error stack
-    res.status(500).json({ message: 'Server error fetching submissions', error: error.message });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+
 // --- Get a Single Submission by its ID ---
 // GET /api/submissions/:id
 router.get('/:id', authenticateJWT, async (req, res) => {
@@ -130,7 +77,7 @@ router.get('/:id', authenticateJWT, async (req, res) => {
     // 1. Find the submission by its ID from the URL parameters
     const submission = await Submission.findById(req.params.id)
       .populate('templateId', 'templateName templateCategory')
-      .populate('userId', 'name email department'); // Also get the user's name/email
+      .populate('userId', 'name email department rollno'); // Also get the user's name/email
 
     // 2. Check if the submission exists
     if (!submission) {
@@ -138,8 +85,12 @@ router.get('/:id', authenticateJWT, async (req, res) => {
     }
 
     // 3. Security Check:
-    if (req.user.role === 'user' && submission.userId.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Forbidden: You do not own this submission' });
+    if (req.user.role === 'user') {
+      // submission.userId may be populated (object) or an ObjectId. Normalize to string for comparison.
+      const ownerId = submission.userId && submission.userId._id ? submission.userId._id.toString() : submission.userId.toString();
+      if (ownerId !== req.user.id) {
+        return res.status(403).json({ message: 'Forbidden: You do not own this submission' });
+      }
     }
 
     // 4. If they are an 'admin' or they own it, send the data
@@ -171,8 +122,11 @@ router.put('/:id', authenticateJWT, async (req, res) => {
     }
 
     // 4. Security Check: Only the owner or an admin can edit
-    if (req.user.role === 'user' && submission.userId.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Forbidden: You do not own this submission' });
+    if (req.user.role === 'user') {
+      const ownerId = submission.userId && submission.userId._id ? submission.userId._id.toString() : submission.userId.toString();
+      if (ownerId !== req.user.id) {
+        return res.status(403).json({ message: 'Forbidden: You do not own this submission' });
+      }
     }
 
     // 5. Update the fields
@@ -215,8 +169,11 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
     }
 
     // 3. Security Check: Only the owner or an admin can delete
-    if (req.user.role === 'user' && submission.userId.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Forbidden: You do not own this submission' });
+    if (req.user.role === 'user') {
+      const ownerId = submission.userId && submission.userId._id ? submission.userId._id.toString() : submission.userId.toString();
+      if (ownerId !== req.user.id) {
+        return res.status(403).json({ message: 'Forbidden: You do not own this submission' });
+      }
     }
 
     // 4. Delete the submission

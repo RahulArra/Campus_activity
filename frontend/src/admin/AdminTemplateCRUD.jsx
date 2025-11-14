@@ -3,14 +3,9 @@ import { PlusCircle, Edit2, Trash2, X, Save, FileText, List, Loader2 } from 'luc
 // IMPORTANT: Shiva needs to install axios: npm install axios
 import axios from 'axios';
 
-// --- TEMPORARY JWT TOKEN (Remove when Shiva implements login) ---
-// This token is used to bypass the '401 Unauthorized' error during development
-const USER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjhmZGMyZTRlZDc3NzVjYzlhOWE1NDBhIiwicm9sZSI6InVzZXIifSwiaWF0IjoxNzYxNDczNjM3LCJleHAiOjE3NjE0ODQ0Mzd9.kmvgUMJkYgyF1HplGl-Ndz_ModcRQPxv4W_LlFiLUrY";
-if (USER_TOKEN) {
-  // Sets the Authorization header for all subsequent axios requests
-  axios.defaults.headers.common['Authorization'] = `Bearer ${USER_TOKEN}`;
-}
-// --- END TEMPORARY FIX ---
+// NOTE: Removed hardcoded development JWT. The app now relies on the real
+// authentication flow (token stored in localStorage and attached by the
+// API/interceptor in `authStore` or `services/api`). Keep tokens out of source.
 
 
 // --- Sub-component for editing fields within the modal ---
@@ -120,7 +115,7 @@ const AdminTemplateCRUD = () => {
         setIsLoading(true); // Show loading indicator in table
         try {
             // ACTUAL API CALL to your backend endpoint
-            const response = await axios.get('/api/templates');
+            const response = await axios.get(`${process.env.REACT_APP_API_URL}/templates`);
             // Update the state with fetched data
             setTemplates(response.data);
         } catch (error) {

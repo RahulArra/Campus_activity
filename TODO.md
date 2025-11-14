@@ -1,6 +1,18 @@
-- [x] Edit frontend/src/pages/SubmitActivity.js to fix handleFormChange function to properly handle functional updates from DynamicFormRenderer
-- [x] Run the frontend app (npm start in frontend directory) and test typing in form fields to ensure dynamic form updates correctly
-- [x] Thorough testing of dynamic form: Navigate to SubmitActivity page, select template, type in fields (text, number, date, textarea, select) to ensure updates without errors
-- [x] Test edge cases: Switching templates, clearing form
-- [x] Start backend server (node backend/server.js) - MongoDB connection issue due to missing MONGO_DB_URI in .env
-+
+# TODO: Add Rollno Field to User Registration and Exports
+
+## Backend Changes
+- [x] Update `backend/models/user.model.js` to add `rollno` field as required string
+- [x] Update `backend/routes/auth.routes.js` to handle `rollno` in signup and return it in login response
+- [x] Update `backend/routes/submission.routes.js` to include `rollno` in user populate fields
+- [x] Update `backend/controllers/export.controller.js` to add `rollno` to CSV fields and PDF table by populating from User
+- [x] Update `backend/controllers/report.controller.js` to include `rollno` in department report responses
+
+## Frontend Changes
+- [x] Update `frontend/src/pages/RegisterPage.jsx` to add rollno input field with validation
+
+## Testing
+- [ ] Test registration with rollno field
+- [ ] Verify rollno appears in login response and submissions
+- [ ] Test export CSV includes rollno
+- [ ] Test export PDF includes rollno
+- [ ] Check reports include rollno

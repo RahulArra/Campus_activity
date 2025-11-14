@@ -1,15 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Filter, Download, User, Calendar, Table2, CheckCircle, XCircle, Clock, FileText, Loader2 } from 'lucide-react';
 import axios from 'axios'; 
 import SubmissionDetailModal from './SubmissionDetailModal'; // Adjust path if needed
-// --- TEMPORARY FIX: HARDCODED JWT FOR TESTING (Must be removed later by Shiva) ---
-// This token is needed to pass the security check on the backend.
-const USER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjhmZTFlYTgzMTc4OGZiMWY3NjQ2NDAzIiwicm9sZSI6ImFkbWluIn0sImlhdCI6MTc2MTQ4NDQ3MSwiZXhwIjoxNzYxNDk1MjcxfQ.GLeUaGxQ-bVg9YsfFUHGgaXAY1spZ6Aw--VAYKKx650"; 
-if (USER_TOKEN) {
-  axios.defaults.headers.common['Authorization'] = `Bearer ${USER_TOKEN}`;
-}
-// --- END TEMPORARY FIX ---
+// NOTE: Removed hardcoded development JWT. Use app login/token instead.
 
+import { API } from '../stores/authStore';
 
 // --- HELPER FUNCTION: Maps status to color/icon ---
 const getStatusBadge = (status) => {
@@ -45,18 +40,40 @@ const AdminSubmissionsView = () => {
     const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
     // --- API CALLS ---
 
-    const loadSubmissions = async () => {
+    const loadSubmissions = useCallback(async () => {
         setIsLoading(true);
         const apiFilters = { ...filters };
         if (apiFilters.status === 'All') { delete apiFilters.status; }
+        
+        // Transform date range filters to match backend expectations
+        if (apiFilters.dateRangeFrom) {
+            apiFilters.from = apiFilters.dateRangeFrom;
+            delete apiFilters.dateRangeFrom;
+        }
+        if (apiFilters.dateRangeTo) {
+            apiFilters.to = apiFilters.dateRangeTo;
+            delete apiFilters.dateRangeTo;
+        }
+
+        // Remove empty filters
         Object.keys(apiFilters).forEach(key => {
             if (!apiFilters[key]) delete apiFilters[key];
         });
 
         try {
-            const response = await axios.get('/api/submissions', { params: apiFilters });
-            setSubmissions(response.data); 
-            console.log(response.data);
+            const endpoint = apiFilters.department 
+   ? `${process.env.REACT_APP_API_URL}/reports/department/${apiFilters.department}`
+: `${process.env.REACT_APP_API_URL}/submissions`;
+
+            
+            // Remove department from query params since it's in the URL for department endpoint
+            if (apiFilters.department) {
+                delete apiFilters.department;
+            }
+
+            const response = await API.get(endpoint, { params: apiFilters });
+            setSubmissions(response.data.data || response.data); 
+            console.log('Loaded submissions:', response.data);
         } catch (error) {
             console.error("Failed to fetch submissions:", error.response ? error.response.data : error.message);
             alert('Failed to load submissions. Authentication or server error.');
@@ -64,13 +81,13 @@ const AdminSubmissionsView = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [filters]);
     const handleStatusUpdate = () => {
         loadSubmissions(); // Simply reload the list
     };
     const fetchTemplateOptions = async () => {
         try {
-            const response = await axios.get('/api/templates');
+const response = await axios.get(`${process.env.REACT_APP_API_URL}/templates`);
             setTemplateOptions(response.data.map(t => ({ id: t._id, name: t.templateName })));
         } catch (error) {
             console.error("Failed to fetch template options:", error);
@@ -81,19 +98,47 @@ const AdminSubmissionsView = () => {
         setIsExporting(true);
         const apiFilters = { ...filters }; 
         if (apiFilters.status === 'All') delete apiFilters.status;
+        
+        // Transform date range filters to match backend expectations
+        if (apiFilters.dateRangeFrom) {
+            apiFilters.from = apiFilters.dateRangeFrom;
+            delete apiFilters.dateRangeFrom;
+        }
+        if (apiFilters.dateRangeTo) {
+            apiFilters.to = apiFilters.dateRangeTo;
+            delete apiFilters.dateRangeTo;
+        }
+
         Object.keys(apiFilters).forEach(key => {
             if (!apiFilters[key]) delete apiFilters[key];
         });
 
         try {
-            console.log(`Starting export for ${format} with filters:`, filters);
-            const response = await axios.get(`http://localhost:5000/api/exports/${format.toLowerCase()}`, { params: filters, responseType: 'blob' });
+            console.log(`Starting export for ${format} with filters:`, apiFilters);
+            let endpoint;
+            if (filters.department) {
+                endpoint = `${process.env.REACT_APP_API_URL}/reports/department/${filters.department}/export`;
+            } else {
+                alert('Please select a department to export.');
+                setIsExporting(false);
+                return;
+            }
+
+            const response = await API.get(endpoint, { 
+                params: { 
+                    ...apiFilters,
+                    format: format.toLowerCase(),
+                    from: apiFilters.from,
+                    to: apiFilters.to
+                }, 
+                responseType: 'blob' 
+            });
             console.log(`Export ${format} response received:`, response);
 
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            const filename = `CAPS_Report_${format}_${new Date().toISOString().split('T')[0]}.${format.toLowerCase()}`;
+            const filename = `CAPS_Report_${filters.department}_${format}_${new Date().toISOString().split('T')[0]}.${format.toLowerCase()}`;
             link.setAttribute('download', filename);
             document.body.appendChild(link);
             link.click();
@@ -128,7 +173,7 @@ const AdminSubmissionsView = () => {
             loadSubmissions();
         }, 300); 
         return () => clearTimeout(handler);
-    }, [filters]);
+    }, [filters, loadSubmissions]);
 
 
     // --- RENDERING LOGIC ---
@@ -137,7 +182,18 @@ const AdminSubmissionsView = () => {
         { header: 'ID', accessor: '_id', render: (id) => <span className="text-id">{id.slice(-6)}</span> },
         { header: 'Student', accessor: 'userId', render: (user) => user?.name || 'Unknown User' }, 
         { header: 'Dept.', accessor: 'userId', render: (user) => user?.department || 'N/A' }, 
-        { header: 'Activity', accessor: 'templateId', render: (template) => template?.templateName?.replace(/_/g, ' ') || 'Unknown Template' },
+{ header: 'Activity', accessor: 'templateId', render: (template) => {
+    // If template is an object with templateName
+    if (template?.templateName) {
+        return template.templateName.replace(/_/g, ' ');
+    }
+    // If template is just an ID string, you might need to look it up
+    else if (typeof template === 'string') {
+        const foundTemplate = templateOptions.find(t => t.id === template);
+        return foundTemplate?.name?.replace(/_/g, ' ') || 'Unknown Template';
+    }
+    return 'Unknown Template';
+}},
         { header: 'Date', accessor: 'createdAt', render: (date) => new Date(date).toLocaleDateString() },
   { header: 'Actions', accessor: '_id', render: (id) => ( // Use accessor '_id'
         <div className="flex-space">
@@ -433,7 +489,7 @@ const AdminSubmissionsView = () => {
                         ))}
                     </select>
 
-                    <select
+                    {/* <select
                         value={filters.status}
                         onChange={(e) => setFilters(p => ({...p, status: e.target.value}))}
                     >
@@ -442,7 +498,7 @@ const AdminSubmissionsView = () => {
                         <option value="Verified by Faculty">Verified by Faculty</option>
                         <option value="Approved">Approved</option>
                         <option value="Rejected">Rejected</option>
-                    </select>
+                    </select> */}
 
                     <select
                         value={filters.templateId}

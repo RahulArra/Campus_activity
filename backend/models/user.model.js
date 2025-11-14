@@ -6,10 +6,20 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
+  rollNo: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
+  teacherId: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
   email: {
     type: String,
     required: true,
-    unique: true, // Ensures no two users can have the same email
+    unique: true,
     lowercase: true,
   },
   password: {
@@ -18,15 +28,32 @@ const userSchema = new Schema({
   },
   department: {
     type: String,
-    required: true,
+  },
+  section: {
+    type: String,
+  },
+  year: {
+    type: String,
+  },
+  classTeacher: {
+    type: Boolean,
+    default: false,
   },
   role: {
     type: String,
-    enum: ['user', 'admin'], // Defines the possible roles
-    default: 'user', // New users are 'user' by default
-  }
-}, { timestamps: true }); // Adds createdAt and updatedAt fields automatically
+    enum: ['superadmin', 'deptadmin', 'teacher', 'student'],
+    default: 'student',
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: {
+    type: String,
+  },
+  profileImage: {
+    type: String,
+  },
+}, { timestamps: true });
 
-const User = mongoose.model('User', userSchema);
-
-module.exports = User;
+module.exports = mongoose.model('User', userSchema);

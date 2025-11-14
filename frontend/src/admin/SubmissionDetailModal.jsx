@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Loader2, X, Check, AlertTriangle, User, FileText, Calendar, Link as LinkIcon, Edit3, Clock } from 'lucide-react'; // <-- Added Clock here
+import { API } from '../stores/authStore';
 
 // Re-import the status badge helper (or move it to a shared utils file)
 const getStatusBadge = (status) => {
@@ -49,8 +50,9 @@ const SubmissionDetailModal = ({ submissionId, onClose, onUpdate }) => {
             setIsLoading(true);
             setError('');
             try {
+                // console.log('Token:', localStorage.getItem('token'));
                 // API call to get details for a single submission
-                const response = await axios.get(`/api/submissions/${submissionId}`);
+                const response = await API.get(`/submissions/${submissionId}`);
                 setSubmission(response.data);
             } catch (err) {
                 console.error("Failed to fetch submission details:", err);
@@ -76,7 +78,7 @@ const SubmissionDetailModal = ({ submissionId, onClose, onUpdate }) => {
         setError('');
         try {
             // API call to update the status
-            await axios.put(`/api/submissions/${submissionId}/status`, {
+            await axios.put(`${process.env.REACT_APP_API_URL}/submissions/${submissionId}/status`, {
                 newStatus: newStatus,
                 // Optionally include remarks if the backend supports it
                 ...(newStatus === 'Rejected' && { remarks: rejectionReason })

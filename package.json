@@ -1,5 +1,9 @@
 {
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.4",
+    "axios": "^1.12.2",
     "cloudinary": "^2.8.0",
     "dayjs": "^1.11.18",
     "dotenv": "^17.2.3",
@@ -8,7 +12,9 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.2",
     "multer": "^2.0.2",
-    "puppeteer": "^24.26.1",
-    "streamifier": "^0.1.1"
+    "react-hook-form": "^7.65.0",
+    "react-router-dom": "^7.9.4",
+    "streamifier": "^0.1.1",
+    "zustand": "^5.0.8"
   }
 }

@@ -1,16 +1,17 @@
-// 1. Import all necessary packages
+// 1. Import all your packages
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 
-// --- IMPORT ROUTE FILES --- *** CORRECT VARIABLE NAMES ***
-const authRoutes = require('./routes/auth.routes');
+// --- IMPORT YOUR ROUTES ---
+const authRoutes = require('./routes/auth.routes'); 
 const templateRoutes = require('./routes/template.routes');
-const submissionRoutes = require('./routes/submission.routes');
+const submissionRoutes = require('./routes/submission.routes'); // <-- ADD THIS LINE
 const uploadsRouter = require('./routes/upload.routes');
-const reportRoutes = require('./routes/report.routes');   // <-- CORRECTED VARIABLE NAME
-const exportRoutes = require('./routes/export.routes'); // <-- CORRECTED VARIABLE NAME (ensure filename matches)
+const reportsRouter = require('./routes/report.routes');
+const exportsRouter = require('./routes/export.routes');
+const superAdminRoutes = require('./routes/superAdminRoutes')
 
 // 2. Load environment variables from .env file
 dotenv.config();
@@ -20,35 +21,47 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // 4. Use middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors()); // Allows your frontend to talk to this backend
+app.use(express.json()); // Allows your server to read JSON data from requests
 
 // --- CONNECT TO MONGODB ---
 mongoose.connect(process.env.MONGO_DB_URI)
-  .then(() => console.log('Connected to MongoDB successfully!'))
+  .then(() => {
+    console.log('Connected to MongoDB successfully!');
+  })
   .catch((err) => {
     console.error('Failed to connect to MongoDB:', err);
-    process.exit(1);
   });
+// ------------------------------
 
-// --- DEFINE MAIN API ROUTES --- *** USING CORRECT VARIABLES ***
-app.use('/auth', authRoutes);
-app.use('/api/templates', templateRoutes);
-app.use('/api/submissions', submissionRoutes);
+// --- USE YOUR ROUTES ---
+// All auth routes will be prefixed with /api/auth
+app.use('/api/auth', authRoutes); 
+// All template routes will be prefixed with /api/templates
+app.use('/api/templates', templateRoutes); 
+// All submission routes will be prefixed with /api/submissions
+app.use('/api/submissions', submissionRoutes); // <-- ADD THIS LINE
 app.use('/api/uploads', uploadsRouter);
-app.use('/api/reports', reportRoutes);   // <-- CORRECTED VARIABLE NAME
-app.use('/api/exports', exportRoutes); // <-- CORRECTED VARIABLE NAME
-
-
-// --- Basic Error Handler ---
+app.use('/api/reports', reportsRouter);
+app.use('/api/exports', exportsRouter);
+app.use('/api/superadmin', superAdminRoutes)
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err.stack || err);
-  res.status(err.status || 500).json({
-      message: err.message || 'Internal Server Error',
-      ...(process.env.NODE_ENV === 'development' ? { stack: err.stack } : {})
-  });
+  // Multer fileFilter will call next(err)
+  if (err.message && err.message.includes('Unsupported file type')) {
+    return res.status(400).json({ message: err.message });
+  }
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ message: 'File too large. Max 5MB.' });
+  }
+  console.error('Unhandled error:', err);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
 });
 
+
+// // 5. Create a simple test route
+// app.get('/', (req, res) => {
+//   res.send('Backend API is running!');
+// });
 
 // 6. Start the server
 app.listen(PORT, () => {
