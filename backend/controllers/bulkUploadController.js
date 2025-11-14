@@ -71,10 +71,16 @@ exports.bulkUpload = async (req, res) => {
               });
 
               console.log(chalk.green(`✅ Added student: ${name}`));
-            }
-
-            else if (row.role === "teacher") {
-              const { name, teacherId, department, classTeacher, email } = row;
+            } else if (row.role === "teacher") {
+              const {
+                name,
+                teacherId,
+                department,
+                classTeacher,
+                email,
+                assignedSection,
+                assignedYear,
+              } = row;
 
               if (!teacherId || !name || !email)
                 throw new Error("Missing name, teacherId or email");
@@ -94,12 +100,18 @@ exports.bulkUpload = async (req, res) => {
                 role: "teacher",
                 classTeacher:
                   String(classTeacher).trim().toLowerCase() === "true",
+                assignedSection: assignedSection
+                  ? assignedSection.trim()
+                  : null,
+                assignedYear: assignedYear ? assignedYear.trim() : null,
               });
 
-              console.log(chalk.green(`✅ Added teacher: ${name}`));
-            }
-
-            else {
+              console.log(
+                chalk.green(
+                  `✅ Added teacher: ${name} (Section ${assignedSection} / Year ${assignedYear})`
+                )
+              );
+            }else {
               throw new Error(`Unknown role: "${row.role}"`);
             }
           } catch (err) {

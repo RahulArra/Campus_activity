@@ -57,8 +57,8 @@ const BulkUpload = () => {
 
     if (selectedTemplate === "teachers") {
         csvContent =
-            "name,email,teacherId,department,classTeacher,role\n" +
-            "Laxman Rao,laxman@example.com,T001,IT,true,teacher\n";
+            "name,email,teacherId,department,classTeacher,assignedSection,assignedYear,role\n" +
+            "Laxman Rao,laxman@example.com,T001,IT,true,2,3,teacher\n";
     }
 
     // Convert to Blob and Download

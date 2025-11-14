@@ -35,6 +35,14 @@ const userSchema = new Schema({
   year: {
     type: String,
   },
+   assignedSection: {
+    type: String,
+    default: null,
+  },
+  assignedYear: {
+    type: String,
+    default: null,
+  },
   classTeacher: {
     type: Boolean,
     default: false,
