@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Filter, Users, Loader2, RotateCcw } from 'lucide-react';
+import { Filter, Users, Loader2, RotateCcw, User, Calendar, FileText, Search } from 'lucide-react';
 import axios from 'axios';
 import { API } from '../stores/authStore';
 
@@ -146,6 +146,25 @@ const Students = () => {
                     border-color: #4f46e5;
                     outline: none;
                     box-shadow: 0 0 0 1px #4f46e5;
+                }
+
+                .filter-group {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .filter-label {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 8px;
+                    display: flex;
+                    align-items: center;
+                }
+
+                .filter-label svg {
+                    margin-right: 6px;
+                    color: #4f46e5;
                 }
 
                 .btn-search {
@@ -305,43 +324,66 @@ const Students = () => {
                 </h2>
 
                 <div className="filter-grid">
-                    <select
-                        value={filters.department}
-                        onChange={(e) => setFilters(p => ({...p, department: e.target.value}))}
-                    >
-                        <option value="">All Departments</option>
-                        {['CSE', 'ECE', 'IT', 'Mech', 'Civil', 'EEE'].map(dept => (
-                            <option key={dept} value={dept}>{dept}</option>
-                        ))}
-                    </select>
+                    <div className="filter-group">
+                        <label className="filter-label">
+                            <User size={16} />
+                            Department
+                        </label>
+                        <select
+                            value={filters.department}
+                            onChange={(e) => setFilters(p => ({...p, department: e.target.value}))}
+                        >
+                            <option value="">All Departments</option>
+                            {['CSE', 'ECE', 'IT', 'Mech', 'Civil', 'EEE'].map(dept => (
+                                <option key={dept} value={dept}>{dept}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                    <select
-                        value={filters.year}
-                        onChange={(e) => setFilters(p => ({...p, year: e.target.value}))}
-                    >
-                        <option value="">All Years</option>
-                        {[1, 2, 3, 4].map(year => (
-                            <option key={year} value={year}>{year} Year</option>
-                        ))}
-                    </select>
+                    <div className="filter-group">
+                        <label className="filter-label">
+                            <Calendar size={16} />
+                            Year
+                        </label>
+                        <select
+                            value={filters.year}
+                            onChange={(e) => setFilters(p => ({...p, year: e.target.value}))}
+                        >
+                            <option value="">All Years</option>
+                            {[1, 2, 3, 4].map(year => (
+                                <option key={year} value={year}>{year} Year</option>
+                            ))}
+                        </select>
+                    </div>
 
-                    <select
-                        value={filters.section}
-                        onChange={(e) => setFilters(p => ({...p, section: e.target.value}))}
-                    >
-                        <option value="">All Sections</option>
-                        {['1', '2', '3', '4','5'].map(section => (
-                            <option key={section} value={section}>{section}</option>
-                        ))}
-                    </select>
+                    <div className="filter-group">
+                        <label className="filter-label">
+                            <FileText size={16} />
+                            Section
+                        </label>
+                        <select
+                            value={filters.section}
+                            onChange={(e) => setFilters(p => ({...p, section: e.target.value}))}
+                        >
+                            <option value="">All Sections</option>
+                            {['1', '2', '3', '4','5'].map(section => (
+                                <option key={section} value={section}>{section}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                    <input
-                        type="text"
-                        placeholder="Search by name or roll number"
-                        value={filters.search}
-                        onChange={(e) => setFilters(p => ({...p, search: e.target.value}))}
-                        
-                    />
+                    <div className="filter-group">
+                        <label className="filter-label">
+                            <Search size={16} />
+                            Search
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Search by name or roll number"
+                            value={filters.search}
+                            onChange={(e) => setFilters(p => ({...p, search: e.target.value}))}
+                        />
+                    </div>
                 </div>
 
                 <button onClick={loadStudents} className="btn-search" disabled={isLoading}>

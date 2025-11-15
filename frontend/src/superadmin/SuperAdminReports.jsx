@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Filter, Download, User, Calendar, Table2, CheckCircle, XCircle, Clock, FileText, Loader2 } from 'lucide-react';
+import { Filter, Download, User, Calendar, Table2, CheckCircle, XCircle, Clock, FileText, Loader2, Search } from 'lucide-react';
 import axios from 'axios';
 import SubmissionDetailModal from '../admin/SubmissionDetailModal'; // Adjust path if needed
 import { API } from '../stores/authStore';
@@ -286,6 +286,26 @@ const response = await axios.get(`${process.env.REACT_APP_API_URL}/templates`);
                     outline: none;
                     box-shadow: 0 0 0 1px #4f46e5;
                 }
+
+                .filter-group {
+                    display: flex;
+                    flex-direction: column;
+                }
+
+                .filter-label {
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 8px;
+                    display: flex;
+                    align-items: center;
+                }
+
+                .filter-label svg {
+                    margin-right: 6px;
+                    color: #4f46e5;
+                }
+
                 .date-label {
                     display: flex;
                     align-items: center;
@@ -462,48 +482,75 @@ const response = await axios.get(`${process.env.REACT_APP_API_URL}/templates`);
                 </h2>
 
                 <div className="filter-grid">
-                    <input
-                        type="text"
-                        placeholder="Filter by Student Name/ID"
-                        value={filters.studentName}
-                        onChange={(e) => setFilters(p => ({...p, studentName: e.target.value}))}
-                    />
+                    <div className="filter-group">
+                        <div className="filter-label">
+                            <Search size={16} />
+                            Student Name/ID
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Filter by Student Name/ID"
+                            value={filters.studentName}
+                            onChange={(e) => setFilters(p => ({...p, studentName: e.target.value}))}
+                        />
+                    </div>
 
-                    <select
-                        value={filters.department}
-                        onChange={(e) => setFilters(p => ({...p, department: e.target.value}))}
-                    >
-                        <option value="">All Departments</option>
-                        {['CSE', 'ECE', 'IT', 'Mech', 'Civil', 'EEE'].map(dept => (
-                            <option key={dept} value={dept}>{dept}</option>
-                        ))}
-                    </select>
+                    <div className="filter-group">
+                        <div className="filter-label">
+                            <User size={16} />
+                            Department
+                        </div>
+                        <select
+                            value={filters.department}
+                            onChange={(e) => setFilters(p => ({...p, department: e.target.value}))}
+                        >
+                            <option value="">All Departments</option>
+                            {['CSE', 'ECE', 'IT', 'Mech', 'Civil', 'EEE'].map(dept => (
+                                <option key={dept} value={dept}>{dept}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                    <select
-                        value={filters.year}
-                        onChange={(e) => setFilters(p => ({...p, year: e.target.value}))}
-                    >
-                        <option value="">All Years</option>
-                        <option value="1">Year 1</option>
-                        <option value="2">Year 2</option>
-                        <option value="3">Year 3</option>
-                        <option value="4">Year 4</option>
-                    </select>
+                    <div className="filter-group">
+                        <div className="filter-label">
+                            <Calendar size={16} />
+                            Year
+                        </div>
+                        <select
+                            value={filters.year}
+                            onChange={(e) => setFilters(p => ({...p, year: e.target.value}))}
+                        >
+                            <option value="">All Years</option>
+                            <option value="1">Year 1</option>
+                            <option value="2">Year 2</option>
+                            <option value="3">Year 3</option>
+                            <option value="4">Year 4</option>
+                        </select>
+                    </div>
 
-                    <select
-                        value={filters.templateId}
-                        onChange={(e) => setFilters(p => ({...p, templateId: e.target.value}))}
-                    >
-                        <option value="">All Activity Types</option>
-                        {templateOptions.map(opt => (
-                            <option key={opt.id} value={opt.id}>{opt.name.replace(/_/g, ' ')}</option>
-                        ))}
-                    </select>
+                    <div className="filter-group">
+                        <div className="filter-label">
+                            <FileText size={16} />
+                            Activity Type
+                        </div>
+                        <select
+                            value={filters.templateId}
+                            onChange={(e) => setFilters(p => ({...p, templateId: e.target.value}))}
+                        >
+                            <option value="">All Activity Types</option>
+                            {templateOptions.map(opt => (
+                                <option key={opt.id} value={opt.id}>{opt.name.replace(/_/g, ' ')}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 <div className="filter-grid">
-                    <div>
-                        <label style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>Sections (Select up to 3)</label>
+                    <div className="filter-group">
+                        <div className="filter-label">
+                            <FileText size={16} />
+                            Sections
+                        </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                             {[1, 2, 3, 4, 5].map(sec => (
                                 <label key={sec} style={{ display: 'flex', alignItems: 'center', fontSize: '14px' }}>
@@ -532,16 +579,20 @@ const response = await axios.get(`${process.env.REACT_APP_API_URL}/templates`);
                 </div>
 
                 <div className="filter-grid">
-                     <label className="date-label">
-                        <Calendar size={18} />
-                        From:
+                    <div className="filter-group">
+                        <div className="filter-label">
+                            <Calendar size={16} />
+                            From
+                        </div>
                         <input type="date" value={filters.dateRangeFrom} onChange={(e) => setFilters(p => ({...p, dateRangeFrom: e.target.value}))} />
-                    </label>
-                    <label className="date-label">
-                        <Calendar size={18} />
-                        To:
+                    </div>
+                    <div className="filter-group">
+                        <div className="filter-label">
+                            <Calendar size={16} />
+                            To
+                        </div>
                         <input type="date" value={filters.dateRangeTo} onChange={(e) => setFilters(p => ({...p, dateRangeTo: e.target.value}))} />
-                    </label>
+                    </div>
                 </div>
 
                 <div className="btn-group">

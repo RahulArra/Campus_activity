@@ -19,25 +19,35 @@ const Sidebar = () => {
   const authStore = useAuthStore();
   const location = useLocation();
 
-  const navItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { text: 'Submit Activity', icon: <AddCircleIcon />, path: '/activity/add' },
-    { text: 'Manage Templates', icon: <AdminPanelSettingsIcon />, path: '/admin/templates', admin: true },
-    { text: 'View Reports', icon: <ReportIcon />, path: '/admin/reports', admin: true },
-    { text: 'Departments', icon: <SupervisorAccountIcon />, path: '/superadmin/departments', superadmin: true },
-    { text: 'Bulk Upload', icon: <UploadIcon />, path: '/superadmin/bulk-upload', superadmin: true },
-    { text: 'Manage Templates', icon: <AdminPanelSettingsIcon />, path: '/admin/templates', superadmin: true },
-
-    { text: 'Students', icon: <PeopleIcon />, path: '/superadmin/students', superadmin: true },
-    { text: 'Teachers', icon: <SchoolIcon />, path: '/superadmin/teachers', superadmin: true },
-    { text: 'View Reports', icon: <AssessmentIcon />, path: '/superadmin/reports', superadmin: true },
-    { text: 'Student Submissions', icon: <ClassIcon />, path: '/teacher/dashboard', teacher: true },
-  ];
-
-  // Use the isAdmin and isSuperAdmin checks from auth store
   const isAdmin = authStore.isAdmin();
   const isSuperAdmin = authStore.isSuperAdmin();
   const isTeacher = authStore.user?.role === 'teacher';
+  const isDeptAdmin = authStore.isDeptAdmin?.();
+
+  const navItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
+
+    // Dept Admin
+    { text: 'Dept Dashboard', icon: <DashboardIcon />, path: '/dept-dashboard', deptadmin: true },
+    { text: 'Dept Reports', icon: <AssessmentIcon />, path: '/dept-reports', deptadmin: true },
+
+    // Student
+    { text: 'Submit Activity', icon: <AddCircleIcon />, path: '/activity/add' },
+
+    // Admin
+    { text: 'Manage Templates', icon: <AdminPanelSettingsIcon />, path: '/admin/templates', admin: true },
+    { text: 'View Reports', icon: <ReportIcon />, path: '/admin/reports', admin: true },
+
+    // Super Admin
+    { text: 'Departments', icon: <SupervisorAccountIcon />, path: '/superadmin/departments', superadmin: true },
+    { text: 'Bulk Upload', icon: <UploadIcon />, path: '/superadmin/bulk-upload', superadmin: true },
+    { text: 'Students', icon: <PeopleIcon />, path: '/superadmin/students', superadmin: true },
+    { text: 'Teachers', icon: <SchoolIcon />, path: '/superadmin/teachers', superadmin: true },
+    { text: 'View Reports', icon: <AssessmentIcon />, path: '/superadmin/reports', superadmin: true },
+
+    // Teacher
+    { text: 'Student Submissions', icon: <ClassIcon />, path: '/teacher/dashboard', teacher: true },
+  ];
 
   return (
     <Drawer
@@ -53,39 +63,48 @@ const Sidebar = () => {
           Campus Tracker
         </Typography>
       </Toolbar>
+
       <Box sx={{ overflow: 'auto' }}>
         <List>
-          {navItems.filter(item => (!item.admin || isAdmin) && (!item.superadmin || isSuperAdmin) && (!item.teacher || isTeacher)).map((item) => (
-            <ListItem key={item.text} disablePadding sx={{ py: 0.5 }}>
-              <ListItemButton 
-                component={RouterLink} 
-                to={item.path}
-                selected={location.pathname === item.path}
-                sx={{
-                  color: 'white',
-                  '&.Mui-selected': {
-                    bgcolor: 'secondary.main', // Highlight selected item
-                    color: 'primary.main',
-                    borderRadius: '8px',
-                    margin: '0 8px',
-                    '&:hover': {
-                      bgcolor: 'secondary.light',
+          {navItems
+            .filter(item =>
+              (!item.admin || isAdmin) &&
+              (!item.superadmin || isSuperAdmin) &&
+              (!item.teacher || isTeacher) &&
+              (!item.deptadmin || isDeptAdmin)
+            )
+            .map((item) => (
+              <ListItem key={item.text} disablePadding sx={{ py: 0.5 }}>
+                <ListItemButton
+                  component={RouterLink}
+                  to={item.path}
+                  selected={location.pathname === item.path}
+                  sx={{
+                    color: 'white',
+                    '&.Mui-selected': {
+                      bgcolor: 'secondary.main',
+                      color: 'primary.main',
+                      borderRadius: '8px',
+                      margin: '0 8px',
+                      '&:hover': {
+                        bgcolor: 'secondary.light',
+                      },
                     },
-                  },
-                  '&:hover': {
-                    bgcolor: 'primary.light',
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: 'inherit' }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText primary={item.text} />
-              </ListItemButton>
-            </ListItem>
-          ))}
+                    '&:hover': {
+                      bgcolor: 'primary.light',
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItemButton>
+              </ListItem>
+            ))}
         </List>
       </Box>
+
     </Drawer>
   );
 };
