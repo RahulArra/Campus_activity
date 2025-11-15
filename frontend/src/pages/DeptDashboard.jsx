@@ -29,7 +29,8 @@ export default function DeptDashboard() {
 
   const [yearFilter, setYearFilter] = useState("");
   const [sectionFilter, setSectionFilter] = useState("");
-  const [classFilter, setClassFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     async function loadDeptData() {
@@ -70,15 +71,21 @@ export default function DeptDashboard() {
   }
 
   const filteredStudents = students.filter((s) => {
-    if (yearFilter && s.year !== Number(yearFilter)) return false;
+    if (yearFilter && s.year !== yearFilter) return false;
     if (sectionFilter && s.section !== sectionFilter) return false;
-
-    if (classFilter) {
-      const className = `${dept}-${s.year}${s.section}`;
-      if (className !== classFilter) return false;
-    }
     return true;
   });
+
+  const paginatedStudents = filteredStudents.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+
+  // Calculate classes info
+  const classesInfo = {};
+  students.forEach(s => {
+    if (!classesInfo[s.year]) classesInfo[s.year] = new Set();
+    classesInfo[s.year].add(s.section);
+  });
+  const classesDisplay = Object.keys(classesInfo).map(year => `${year}st Year: ${classesInfo[year].size} sections`).join(", ");
 
   return (
     <div className="admin-container">
@@ -138,7 +145,7 @@ export default function DeptDashboard() {
             Classes
           </h3>
           <div style={{ fontSize: 20, fontWeight: 600 }}>
-            {(overview?.classes || []).join(", ") || "None"}
+            {classesDisplay || "None"}
           </div>
         </div>
       </div>
@@ -156,6 +163,26 @@ export default function DeptDashboard() {
       {/* STUDENTS TABLE */}
       <div className="card">
         <h2>Students ({filteredStudents.length})</h2>
+
+        {/* Filters */}
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+          <select value={yearFilter} onChange={(e) => { setYearFilter(e.target.value); setPage(1); }}>
+            <option value="">All Years</option>
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year</option>
+            <option value="3">3rd Year</option>
+            <option value="4">4th Year</option>
+          </select>
+          <select value={sectionFilter} onChange={(e) => { setSectionFilter(e.target.value); setPage(1); }}>
+            <option value="">All Sections</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+
         <div className="table-wrapper">
           <table>
             <thead>
@@ -167,7 +194,7 @@ export default function DeptDashboard() {
               </tr>
             </thead>
             <tbody>
-              {filteredStudents.map((s) => (
+              {paginatedStudents.map((s) => (
                 <tr key={s._id}>
                   <td>{s.name}</td>
                   <td>{s.rollNo}</td>
@@ -178,6 +205,15 @@ export default function DeptDashboard() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+            <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}>Prev</button>
+            <span style={{ margin: '0 16px' }}>Page {page} of {totalPages}</span>
+            <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}>Next</button>
+          </div>
+        )}
       </div>
 
       {/* TEACHERS TABLE */}
@@ -198,8 +234,8 @@ export default function DeptDashboard() {
                 <tr key={t._id}>
                   <td>{t.name}</td>
                   <td>{t.teacherId}</td>
-                  <td>{t.classAssigned || "—"}</td>
-                  <td>{t.isClassTeacher ? "Yes" : "No"}</td>
+                  <td>{t.assignedYear && t.assignedSection ? `${t.assignedYear} Year - Section ${t.assignedSection}  ` : "—"}</td>
+                  <td>{t.classTeacher ? "Yes" : "No"}</td>
                 </tr>
               ))}
             </tbody>

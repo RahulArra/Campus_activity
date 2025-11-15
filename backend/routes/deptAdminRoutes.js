@@ -58,7 +58,7 @@ router.get('/:dept/teachers', async (req, res) => {
     const filter = { department: dept, role: 'teacher' };
     if (classAssigned) filter.classAssigned = classAssigned;
     if (typeof isClassTeacher !== 'undefined') {
-      filter.isClassTeacher = (isClassTeacher === 'true' || isClassTeacher === true);
+      filter.classTeacher = (isClassTeacher === 'true' || isClassTeacher === true);
     }
     if (q) filter.$or = [
       { name: new RegExp(q, 'i') },
@@ -66,7 +66,7 @@ router.get('/:dept/teachers', async (req, res) => {
     ];
 
     const teachers = await User.find(filter)
-      .select('name teacherId classAssigned isClassTeacher email phone')
+      .select('name teacherId assignedYear assignedSection classTeacher email phone')
       .skip((page - 1) * limit)
       .limit(Number(limit))
       .lean();

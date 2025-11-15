@@ -114,7 +114,7 @@ function drawTableRow(doc, activity, y) {
   const activityData = activity.data || {};
   const endDate = activityData.endDate || activityData.completionDate || '';
 
-  doc.text(activity.userId?.rollno || 'Unknown', col1_x, y, { width: 60 });
+  doc.text(activity.userId?.rollNo || 'Unknown', col1_x, y, { width: 60 });
   doc.text(activity.userId?.name || 'Unknown', col2_x, y, { width: 90 });
   doc.text(activity.department || activity.userId?.department || 'Unknown', col3_x, y, { width: 70 });
   doc.text(activity.templateId?.templateName || 'Unknown Activity', col4_x, y, { width: 130 });
@@ -192,7 +192,7 @@ router.get('/department/:dept', verifyToken, async (req, res) => {
       $or: [{ userId: { $in: userIds } }, { department: new RegExp(`^${dept}$`, 'i') }]
     };
     if (dateRange) query.createdAt = dateRange;
-    const docs = await Activity.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(parseInt(limit)).populate('userId', 'name department rollno year section').lean();
+    const docs = await Activity.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(parseInt(limit)).populate('userId', 'name department rollNo year section').lean();
     const total = await Activity.countDocuments(query);
     return res.status(200).json({ total, data: docs });
   } catch (err) {
@@ -223,7 +223,7 @@ router.get('/department/:dept/export', verifyToken, async (req, res) => {
     let activities = await Activity.find(query)
       .sort({ createdAt: -1 })
       .populate('templateId', 'templateName')
-      .populate('userId', 'name department rollno year section')
+      .populate('userId', 'name department rollNo year section')
       .lean();
 
     console.log(`Export: found ${activities.length} activities for department=${dept}`);
@@ -238,7 +238,7 @@ router.get('/department/:dept/export', verifyToken, async (req, res) => {
         const activityData = activity.data || {};
         const endDate = activityData.endDate || activityData.completionDate || '';
         csvRows.push([
-          activity.userId?.rollno || 'Unknown',
+          activity.userId?.rollNo || 'Unknown',
           activity.userId?.name || 'Unknown',
           activity.department || activity.userId?.department || 'Unknown',
           activity.templateId?.templateName || 'Unknown Activity',
