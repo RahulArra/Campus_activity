@@ -75,7 +75,7 @@ const LoginPage = () => {
               <StyledInput
                 {...field}
                 onChange={handleInputChange(field.onChange)} // <-- APPLIED FIX
-                label="Login ID (Roll No for Students, Teacher ID for Teachers)"
+                label="Login ID (Roll No for Students, Teacher ID for Teachers, Email for Admins)"
                 type="text"
                 error={!!fieldState.error}
                 helperText={fieldState.error?.message}

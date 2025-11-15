@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import ActivityViewPage from './pages/ActivityViewPage';
 import ActivityAddPage from './pages/ActivityAddPage';
@@ -34,6 +35,9 @@ const App = () => (
           🔒 Protected Routes
       -------------------------- */}
       <Route element={<PrivateRoute />}>
+
+        {/* Change Password Route */}
+        <Route path="/change-password" element={<ChangePasswordPage />} />
 
         {/* General User Routes */}
         <Route path="/dashboard" element={<DashboardPage />} />

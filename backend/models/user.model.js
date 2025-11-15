@@ -59,6 +59,10 @@ const userSchema = new Schema({
   verificationToken: {
     type: String,
   },
+  passwordChanged: {
+    type: Boolean,
+    default: false,
+  },
   profileImage: {
     type: String,
   },

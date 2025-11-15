@@ -6,8 +6,22 @@ const PrivateRoute = () => {
   const { isAuthenticated, user } = useAuthStore();
   const location = useLocation();
 
+  // If not authenticated, redirect to login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If authenticated but password not changed, redirect to change password
+  if (user && !user.passwordChanged) {
+    if (location.pathname !== '/change-password') {
+      return <Navigate to="/change-password" replace />;
+    }
+    // Allow access to change password page without BaseLayout
+    return <Outlet />;
+  }
+
   // Block access to admin routes for non-admin users
-  if (isAuthenticated && location.pathname.startsWith('/admin')) {
+  if (location.pathname.startsWith('/admin')) {
     const role = user?.role || (user && user.role) || null;
     if (role !== 'admin' && role !== 'superadmin') {
       return <Navigate to="/dashboard" replace />;
@@ -15,7 +29,7 @@ const PrivateRoute = () => {
   }
 
   // Block access to super admin routes for non-super-admin users
-  if (isAuthenticated && location.pathname.startsWith('/superadmin')) {
+  if (location.pathname.startsWith('/superadmin')) {
     const role = user?.role || (user && user.role) || null;
     if (role !== 'superadmin') {
       return <Navigate to="/dashboard" replace />;
@@ -23,13 +37,10 @@ const PrivateRoute = () => {
   }
 
   // Renders the BaseLayout wrapper, and the requested child route (e.g., DashboardPage)
-  return isAuthenticated ? (
+  return (
     <BaseLayout>
       <Outlet />
     </BaseLayout>
-  ) : (
-    // If not authenticated, redirect to the login page
-    <Navigate to="/login" replace />
   );
 };
 

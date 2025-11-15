@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/user.model'); // Adjust path if needed
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); // <-- ADD THIS IMPORT AT THE TOP
+const { authenticateJWT } = require('../middleware/auth.middleware');
 // --- Signup Route ---
 // POST /api/auth/signup
 router.post('/signup', async (req, res) => {
@@ -45,11 +46,12 @@ router.post('/login', async (req, res) => {
     // 1. Get loginId and password from request body
     const { loginId, password } = req.body;
 
-    // 2. Check if user exists by rollNo or teacherId
+    // 2. Check if user exists by rollNo, teacherId, or email
     const user = await User.findOne({
       $or: [
         { rollNo: loginId },
-        { teacherId: loginId }
+        { teacherId: loginId },
+        { email: loginId }
       ]
     });
     if (!user) {
@@ -70,10 +72,10 @@ router.post('/login', async (req, res) => {
       },
     };
 
-    // Include teacher-specific fields in the payload
+    // Include teacher-specific fields in the payload only if assigned
     if (user.role === 'teacher') {
-      payload.user.assignedSection = user.assignedSection;
-      payload.user.assignedYear = user.assignedYear;
+      if (user.assignedSection) payload.user.assignedSection = user.assignedSection;
+      if (user.assignedYear) payload.user.assignedYear = user.assignedYear;
       payload.user.department = user.department;
     }
 
@@ -83,7 +85,18 @@ router.post('/login', async (req, res) => {
       { expiresIn: '3h' }, // Token expires in 3 hours
       (err, token) => {
         if (err) throw err;
-        res.json({ token, user: { id: user.id, name: user.name, email: user.email, rollno: user.rollno, department: user.department, role: user.role } });
+        res.json({
+          token,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            rollno: user.rollno,
+            department: user.department,
+            role: user.role,
+            passwordChanged: user.passwordChanged
+          }
+        });
       }
     );
 
@@ -91,4 +104,39 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+// --- Change Password Route ---
+// POST /api/auth/change-password
+router.post('/change-password', authenticateJWT, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id; // Assuming user ID is available from middleware
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if current password is correct
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password and set passwordChanged to true
+    user.password = hashedPassword;
+    user.passwordChanged = true;
+    await user.save();
+
+    res.json({ message: 'Password changed successfully' });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 module.exports = router;

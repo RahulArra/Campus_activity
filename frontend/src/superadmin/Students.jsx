@@ -406,20 +406,22 @@ const Students = () => {
                         <div className="table-wrapper">
                             <table className="students-table">
                                 <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Roll Number</th>
-                                        <th>Department</th>
-                                        <th>Year</th>
-                                        <th>Section</th>
-                                        <th>Actions</th>
-                                    </tr>
+                <tr>
+                  <th>Name</th>
+                  <th>Roll Number</th>
+                  <th>Email</th>
+                  <th>Department</th>
+                  <th>Year</th>
+                  <th>Section</th>
+                  <th>Actions</th>
+                </tr>
                                 </thead>
                                 <tbody>
                                     {students.map((student) => (
                                         <tr key={student._id}>
                                             <td>{student.name}</td>
                                             <td>{student.rollNo}</td>
+                                            <td>{student.email}</td>
                                             <td>{student.department}</td>
                                             <td>{student.year}</td>
                                             <td>{student.section}</td>

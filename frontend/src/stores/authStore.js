@@ -48,6 +48,28 @@ const useAuthStore = create((set, get) => ({
     set({ token, user, isAuthenticated: true });
   },
 
+  // ------- CHANGE PASSWORD -------
+  changePassword: async (currentPassword, newPassword) => {
+    try {
+      const response = await API.post('/auth/change-password', {
+        currentPassword,
+        newPassword,
+      });
+      return { success: true, message: response.data.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to change password',
+      };
+    }
+  },
+
+  // ------- UPDATE USER -------
+  updateUser: (updatedUser) => {
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    set({ user: updatedUser });
+  },
+
   // ------- LOGOUT -------
   logout: () => {
     localStorage.removeItem('token');

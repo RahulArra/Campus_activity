@@ -58,23 +58,26 @@ router.get('/', authenticateJWT, async (req, res) => {
       filter.userId = req.user.id;
     }
     // If they are an 'admin', they can query any userId (or none to get all)
-    // For teachers, filter by their assigned section/year
+    // For teachers, filter by their assigned section/year or show their own submissions
     if (req.user.role === 'teacher') {
-      if (!req.user.assignedSection || !req.user.assignedYear) {
-        return res.status(403).json({ message: 'Teacher not assigned to a specific section and year' });
-      }
-      const teacherFilter = {};
-      teacherFilter.section = req.user.assignedSection;
-      teacherFilter.year = req.user.assignedYear;
-      if (req.user.department) teacherFilter.department = req.user.department;
+      if (req.user.assignedSection && req.user.assignedYear) {
+        // Teacher is assigned - show submissions from their assigned students
+        const teacherFilter = {};
+        teacherFilter.section = req.user.assignedSection;
+        teacherFilter.year = req.user.assignedYear;
+        if (req.user.department) teacherFilter.department = req.user.department;
 
-      // Find students that match the teacher's assignment
-      const students = await require('../models/user.model').find({
-        role: 'student',
-        ...teacherFilter
-      }).select('_id');
-      const studentIds = students.map(s => s._id);
-      filter.userId = { $in: studentIds };
+        // Find students that match the teacher's assignment
+        const students = await require('../models/user.model').find({
+          role: 'student',
+          ...teacherFilter
+        }).select('_id');
+        const studentIds = students.map(s => s._id);
+        filter.userId = { $in: studentIds };
+      } else {
+        // Teacher is not assigned - show their own submissions like a student
+        filter.userId = req.user.id;
+      }
     }
 
     // 3. Find all submissions that match the filter
@@ -403,7 +406,7 @@ router.get('/:id', authenticateJWT, async (req, res) => {
         return res.status(403).json({ message: 'Forbidden: You do not own this submission' });
       }
     }
-    // For teachers, check if the submission belongs to their assigned students
+    // For teachers, check if the submission belongs to their assigned students or their own submissions
     if (req.user.role === 'teacher') {
       const teacherFilter = {};
       if (req.user.assignedSection) teacherFilter.section = req.user.assignedSection;
@@ -417,8 +420,9 @@ router.get('/:id', authenticateJWT, async (req, res) => {
       const studentIds = students.map(s => s._id.toString());
       const submissionOwnerId = submission.userId && submission.userId._id ? submission.userId._id.toString() : submission.userId.toString();
 
-      if (!studentIds.includes(submissionOwnerId)) {
-        return res.status(403).json({ message: 'Forbidden: You can only view submissions from your assigned students' });
+      // Allow if it's their own submission or from their assigned students
+      if (!studentIds.includes(submissionOwnerId) && submissionOwnerId !== req.user.id) {
+        return res.status(403).json({ message: 'Forbidden: You can only view submissions from your assigned students or your own submissions' });
       }
     }
 
@@ -457,7 +461,7 @@ router.put('/:id', authenticateJWT, async (req, res) => {
         return res.status(403).json({ message: 'Forbidden: You do not own this submission' });
       }
     }
-    // For teachers, check if the submission belongs to their assigned students
+    // For teachers, check if the submission belongs to their assigned students or their own submissions
     if (req.user.role === 'teacher') {
       const teacherFilter = {};
       if (req.user.assignedSection) teacherFilter.section = req.user.assignedSection;
@@ -471,8 +475,9 @@ router.put('/:id', authenticateJWT, async (req, res) => {
       const studentIds = students.map(s => s._id.toString());
       const submissionOwnerId = submission.userId && submission.userId._id ? submission.userId._id.toString() : submission.userId.toString();
 
-      if (!studentIds.includes(submissionOwnerId)) {
-        return res.status(403).json({ message: 'Forbidden: You can only edit submissions from your assigned students' });
+      // Allow if it's their own submission or from their assigned students
+      if (!studentIds.includes(submissionOwnerId) && submissionOwnerId !== req.user.id) {
+        return res.status(403).json({ message: 'Forbidden: You can only edit submissions from your assigned students or your own submissions' });
       }
     }
 
@@ -522,7 +527,7 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
         return res.status(403).json({ message: 'Forbidden: You do not own this submission' });
       }
     }
-    // For teachers, check if the submission belongs to their assigned students
+    // For teachers, check if the submission belongs to their assigned students or their own submissions
     if (req.user.role === 'teacher') {
       const teacherFilter = {};
       if (req.user.assignedSection) teacherFilter.section = req.user.assignedSection;
@@ -536,8 +541,9 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
       const studentIds = students.map(s => s._id.toString());
       const submissionOwnerId = submission.userId && submission.userId._id ? submission.userId._id.toString() : submission.userId.toString();
 
-      if (!studentIds.includes(submissionOwnerId)) {
-        return res.status(403).json({ message: 'Forbidden: You can only delete submissions from your assigned students' });
+      // Allow if it's their own submission or from their assigned students
+      if (!studentIds.includes(submissionOwnerId) && submissionOwnerId !== req.user.id) {
+        return res.status(403).json({ message: 'Forbidden: You can only delete submissions from your assigned students or your own submissions' });
       }
     }
 

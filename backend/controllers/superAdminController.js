@@ -49,6 +49,8 @@ exports.resetPassword = async (req, res) => {
       defaultPassword = user.rollNo;
     } else if (user.role === "teacher") {
       defaultPassword = user.teacherId;
+    } else if (user.role === "admin" || user.role === "superadmin") {
+      defaultPassword = user.email;
     } else {
       return res.status(400).json({ message: "Cannot reset password for this role" });
     }
@@ -56,11 +58,13 @@ exports.resetPassword = async (req, res) => {
     const hashed = await bcrypt.hash(defaultPassword, 10);
 
     user.password = hashed;
+    user.passwordChanged = false;
     await user.save();
 
     res.status(200).json({
       message: "Password reset successfully",
       defaultPasswordUsed: defaultPassword,
+      email: user.email,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
