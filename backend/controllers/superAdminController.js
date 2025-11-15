@@ -90,9 +90,11 @@ exports.getStudents = async (req, res) => {
       .sort({ createdAt: -1 });
 
     const total = await User.countDocuments(query);
+    const totalPages = Math.ceil(total / limit);
 
     res.status(200).json({
       total,
+      totalPages,
       page: parseInt(page),
       limit: parseInt(limit),
       students,
@@ -125,9 +127,11 @@ exports.getTeachers = async (req, res) => {
       .sort({ createdAt: -1 });
 
     const total = await User.countDocuments(query);
+    const totalPages = Math.ceil(total / limit);
 
     res.status(200).json({
       total,
+      totalPages,
       page: parseInt(page),
       limit: parseInt(limit),
       teachers,

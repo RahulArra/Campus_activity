@@ -65,6 +65,13 @@ router.post('/login', async (req, res) => {
       },
     };
 
+    // Include teacher-specific fields in the payload
+    if (user.role === 'teacher') {
+      payload.user.assignedSection = user.assignedSection;
+      payload.user.assignedYear = user.assignedYear;
+      payload.user.department = user.department;
+    }
+
     jwt.sign(
       payload,
       process.env.JWT_SECRET,

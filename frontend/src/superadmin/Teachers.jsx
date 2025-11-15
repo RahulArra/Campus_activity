@@ -48,6 +48,10 @@ const Teachers = () => {
     };
 
     useEffect(() => {
+        setCurrentPage(1);
+    }, [filters]);
+
+    useEffect(() => {
         const handler = setTimeout(() => {
             loadTeachers();
         }, 300);

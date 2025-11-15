@@ -180,17 +180,19 @@ router.get('/activity/:templateId', verifyToken, async (req, res) => {
 
 router.get('/department/:dept', verifyToken, async (req, res) => {
   const { dept } = req.params;
-  const { from, to, page = 1, limit = 50 } = req.query;
+  const { from, to, page = 1, limit = 50, year, section } = req.query;
   try {
     const dateRange = buildDateRange(from, to);
     const userQuery = { department: new RegExp(`^${dept}$`, 'i') };
+    if (year) userQuery.year = year;
+    if (section) userQuery.section = { $in: section.split(',') };
     const usersInDept = await User.find(userQuery).select('_id').lean();
     const userIds = usersInDept.map(u => u._id);
     const query = {
       $or: [{ userId: { $in: userIds } }, { department: new RegExp(`^${dept}$`, 'i') }]
     };
     if (dateRange) query.createdAt = dateRange;
-    const docs = await Activity.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(parseInt(limit)).populate('userId', 'name department rollno').lean();
+    const docs = await Activity.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(parseInt(limit)).populate('userId', 'name department rollno year section').lean();
     const total = await Activity.countDocuments(query);
     return res.status(200).json({ total, data: docs });
   } catch (err) {
@@ -203,12 +205,14 @@ router.get('/department/:dept', verifyToken, async (req, res) => {
 // --- EXPORT ROUTE ---
 router.get('/department/:dept/export', verifyToken, async (req, res) => {
   const { dept } = req.params;
-  const { format = 'pdf', from, to } = req.query;
-  
+  const { format = 'pdf', from, to, year, section } = req.query;
+
   try {
     // 1. Get Data
     const dateRange = buildDateRange(from, to);
     const userQuery = { department: new RegExp(`^${dept}$`, 'i') };
+    if (year) userQuery.year = year;
+    if (section) userQuery.section = { $in: section.split(',') };
     const usersInDept = await User.find(userQuery).select('_id').lean();
     const userIds = usersInDept.map(u => u._id);
     const query = {
@@ -219,7 +223,7 @@ router.get('/department/:dept/export', verifyToken, async (req, res) => {
     let activities = await Activity.find(query)
       .sort({ createdAt: -1 })
       .populate('templateId', 'templateName')
-      .populate('userId', 'name department rollno')
+      .populate('userId', 'name department rollno year section')
       .lean();
 
     console.log(`Export: found ${activities.length} activities for department=${dept}`);
@@ -234,7 +238,7 @@ router.get('/department/:dept/export', verifyToken, async (req, res) => {
         const activityData = activity.data || {};
         const endDate = activityData.endDate || activityData.completionDate || '';
         csvRows.push([
-          activity.userId?.rollno || 'Unknown', 
+          activity.userId?.rollno || 'Unknown',
           activity.userId?.name || 'Unknown',
           activity.department || activity.userId?.department || 'Unknown',
           activity.templateId?.templateName || 'Unknown Activity',
@@ -257,35 +261,35 @@ router.get('/department/:dept/export', verifyToken, async (req, res) => {
 
     } else {
       // 3. PDFKIT TEMPLATE LOGIC
-      
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=department_${dept}_report.pdf`);
-      
-      const doc = new PDFDocument({ 
-        margin: 30, 
-        size: 'A4', 
+
+      const doc = new PDFDocument({
+        margin: 30,
+        size: 'A4',
         layout: 'landscape'
       });
-      
+
       // --- MODIFIED: Pass 'dept' to the header on new pages ---
       doc.on('pageAdded', () => {
         drawBorder(doc);
         drawHeader(doc, dept); // <-- Pass dept
         drawFooter(doc);
       });
-      
+
       doc.pipe(res);
-      
+
       // --- Draw Page 1 Template ---
       drawBorder(doc);
       drawHeader(doc, dept); // <-- Pass dept
       drawFooter(doc);
-      
+
       // --- Draw Table Content ---
       let tableTop = 120; // <-- Adjusted start position for table
       let rowY = drawTableHeader(doc, tableTop);
       const pageBottom = doc.page.height - 50;
-      
+
       for (const activity of activities) {
         if (rowY + 50 > pageBottom) {
           doc.addPage();

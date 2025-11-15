@@ -50,6 +50,10 @@ const Students = () => {
     };
 
     useEffect(() => {
+        setCurrentPage(1);
+    }, [filters]);
+
+    useEffect(() => {
         const handler = setTimeout(() => {
             loadStudents();
         }, 300);
@@ -326,7 +330,7 @@ const Students = () => {
                         onChange={(e) => setFilters(p => ({...p, section: e.target.value}))}
                     >
                         <option value="">All Sections</option>
-                        {['A', 'B', 'C', 'D'].map(section => (
+                        {['1', '2', '3', '4','5'].map(section => (
                             <option key={section} value={section}>{section}</option>
                         ))}
                     </select>

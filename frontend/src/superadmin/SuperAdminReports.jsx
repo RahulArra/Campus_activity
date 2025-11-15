@@ -27,7 +27,8 @@ const SuperAdminReports = () => {
         dateRangeFrom: '',
         dateRangeTo: '',
         department: '',
-        status: 'All'
+        year: '',
+        section: []
     });
     const [isLoading, setIsLoading] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
@@ -38,7 +39,6 @@ const SuperAdminReports = () => {
     const loadSubmissions = useCallback(async () => {
         setIsLoading(true);
         const apiFilters = { ...filters };
-        if (apiFilters.status === 'All') { delete apiFilters.status; }
 
         if (apiFilters.dateRangeFrom) {
             apiFilters.from = apiFilters.dateRangeFrom;
@@ -60,6 +60,11 @@ const SuperAdminReports = () => {
 
             if (apiFilters.department) {
                 delete apiFilters.department;
+            }
+
+            // Handle section array for API
+            if (apiFilters.section && Array.isArray(apiFilters.section)) {
+                apiFilters.section = apiFilters.section.join(',');
             }
 
             const response = await API.get(endpoint, { params: apiFilters });
@@ -86,11 +91,11 @@ const response = await axios.get(`${process.env.REACT_APP_API_URL}/templates`);
             console.error("Failed to fetch template options:", error);
         }
     };
+    
 
     const handleExport = async (format) => {
         setIsExporting(true);
         const apiFilters = { ...filters };
-        if (apiFilters.status === 'All') delete apiFilters.status;
 
         if (apiFilters.dateRangeFrom) {
             apiFilters.from = apiFilters.dateRangeFrom;
@@ -104,6 +109,11 @@ const response = await axios.get(`${process.env.REACT_APP_API_URL}/templates`);
         Object.keys(apiFilters).forEach(key => {
             if (!apiFilters[key]) delete apiFilters[key];
         });
+
+        // Handle section array for API
+        if (apiFilters.section && Array.isArray(apiFilters.section)) {
+            apiFilters.section = apiFilters.section.join(',');
+        }
 
         try {
             console.log(`Starting export for ${format} with filters:`, apiFilters);
@@ -470,14 +480,14 @@ const response = await axios.get(`${process.env.REACT_APP_API_URL}/templates`);
                     </select>
 
                     <select
-                        value={filters.status}
-                        onChange={(e) => setFilters(p => ({...p, status: e.target.value}))}
+                        value={filters.year}
+                        onChange={(e) => setFilters(p => ({...p, year: e.target.value}))}
                     >
-                        <option value="All">All Statuses</option>
-                        <option value="submitted">Submitted / Pending</option>
-                        <option value="Verified by Faculty">Verified by Faculty</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
+                        <option value="">All Years</option>
+                        <option value="1">Year 1</option>
+                        <option value="2">Year 2</option>
+                        <option value="3">Year 3</option>
+                        <option value="4">Year 4</option>
                     </select>
 
                     <select
@@ -489,6 +499,36 @@ const response = await axios.get(`${process.env.REACT_APP_API_URL}/templates`);
                             <option key={opt.id} value={opt.id}>{opt.name.replace(/_/g, ' ')}</option>
                         ))}
                     </select>
+                </div>
+
+                <div className="filter-grid">
+                    <div>
+                        <label style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px', display: 'block' }}>Sections (Select up to 3)</label>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                            {[1, 2, 3, 4, 5].map(sec => (
+                                <label key={sec} style={{ display: 'flex', alignItems: 'center', fontSize: '14px' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={filters.section.includes(sec.toString())}
+                                        onChange={(e) => {
+                                            const newSection = [...filters.section];
+                                            if (e.target.checked) {
+                                                if (newSection.length < 3) {
+                                                    newSection.push(sec.toString());
+                                                }
+                                            } else {
+                                                const index = newSection.indexOf(sec.toString());
+                                                if (index > -1) newSection.splice(index, 1);
+                                            }
+                                            setFilters(p => ({...p, section: newSection}));
+                                        }}
+                                        style={{ marginRight: '4px' }}
+                                    />
+                                    Section {sec}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="filter-grid">
