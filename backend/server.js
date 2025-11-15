@@ -11,8 +11,8 @@ const submissionRoutes = require('./routes/submission.routes'); // <-- ADD THIS 
 const uploadsRouter = require('./routes/upload.routes');
 const reportsRouter = require('./routes/report.routes');
 const exportsRouter = require('./routes/export.routes');
-const superAdminRoutes = require('./routes/superAdminRoutes')
-
+const superAdminRoutes = require('./routes/superAdminRoutes');
+const deptAdminRoutes = require('./routes/deptAdminRoutes');
 // 2. Load environment variables from .env file
 dotenv.config();
 
@@ -44,7 +44,8 @@ app.use('/api/submissions', submissionRoutes); // <-- ADD THIS LINE
 app.use('/api/uploads', uploadsRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/exports', exportsRouter);
-app.use('/api/superadmin', superAdminRoutes)
+app.use('/api/superadmin', superAdminRoutes);
+app.use('/api/dept', deptAdminRoutes);
 app.use((err, req, res, next) => {
   // Multer fileFilter will call next(err)
   if (err.message && err.message.includes('Unsupported file type')) {

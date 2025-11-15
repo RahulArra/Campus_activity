@@ -1,16 +1,16 @@
-import {create} from 'zustand';
+import { create } from 'zustand';
 import axios from 'axios';
 
-// Create a basic Axios instance with your backend URL (Naveen's server)
+// Axios instance
 export const API = axios.create({
-  baseURL: process.env.REACT_APP_API_URL , // Assume backend runs on port 5000
+  baseURL: process.env.REACT_APP_API_URL,
 });
 
-// Axios interceptor to automatically attach the token
+// Attach token to every request
 API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token'); // cite: 2.1
+  const token = localStorage.getItem('token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`; // cite: 2.1
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -20,6 +20,7 @@ const useAuthStore = create((set, get) => ({
   user: JSON.parse(localStorage.getItem('user')) || null,
   isAuthenticated: !!localStorage.getItem('token'),
 
+  // ------- ROLE CHECKS -------
   isAdmin: () => {
     const user = get().user;
     return user?.role === 'admin';
@@ -30,12 +31,19 @@ const useAuthStore = create((set, get) => ({
     return user?.role === 'superadmin';
   },
 
+  isDeptAdmin: () => {
+    const user = get().user;
+    return user?.role === 'deptadmin';
+  },
+
+  // ------- LOGIN -------
   login: (token, user) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
     set({ token, user, isAuthenticated: true });
   },
 
+  // ------- LOGOUT -------
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

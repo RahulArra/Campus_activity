@@ -19,22 +19,33 @@ const Sidebar = () => {
   const location = useLocation();
 
   const navItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { text: 'Submit Activity', icon: <AddCircleIcon />, path: '/activity/add' },
-    { text: 'Manage Templates', icon: <AdminPanelSettingsIcon />, path: '/admin/templates', admin: true },
-    { text: 'View Reports', icon: <ReportIcon />, path: '/admin/reports', admin: true },
-    { text: 'Departments', icon: <SupervisorAccountIcon />, path: '/superadmin/departments', superadmin: true },
-    { text: 'Bulk Upload', icon: <UploadIcon />, path: '/superadmin/bulk-upload', superadmin: true },
-    { text: 'Manage Templates', icon: <AdminPanelSettingsIcon />, path: '/admin/templates', superadmin: true },
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
 
-    { text: 'Students', icon: <PeopleIcon />, path: '/superadmin/students', superadmin: true },
-    { text: 'Teachers', icon: <SchoolIcon />, path: '/superadmin/teachers', superadmin: true },
-    { text: 'View Reports', icon: <AssessmentIcon />, path: '/superadmin/reports', superadmin: true },
-  ];
+  // 🔥 Dept Admin Access
+  { text: 'Dept Dashboard', icon: <DashboardIcon />, path: '/dept-dashboard', deptadmin: true },
+  { text: 'Dept Reports', icon: <AssessmentIcon />, path: '/dept-reports', deptadmin: true },
+
+  { text: 'Submit Activity', icon: <AddCircleIcon />, path: '/activity/add' },
+
+  // Admin
+  { text: 'Manage Templates', icon: <AdminPanelSettingsIcon />, path: '/admin/templates', admin: true },
+  { text: 'View Reports', icon: <ReportIcon />, path: '/admin/reports', admin: true },
+
+  // Superadmin
+  { text: 'Departments', icon: <SupervisorAccountIcon />, path: '/superadmin/departments', superadmin: true },
+  { text: 'Bulk Upload', icon: <UploadIcon />, path: '/superadmin/bulk-upload', superadmin: true },
+  { text: 'Manage Templates', icon: <AdminPanelSettingsIcon />, path: '/admin/templates', superadmin: true },
+  { text: 'Students', icon: <PeopleIcon />, path: '/superadmin/students', superadmin: true },
+  { text: 'Teachers', icon: <SchoolIcon />, path: '/superadmin/teachers', superadmin: true },
+  { text: 'View Reports', icon: <AssessmentIcon />, path: '/superadmin/reports', superadmin: true },
+];
+
+
 
   // Use the isAdmin and isSuperAdmin checks from auth store
   const isAdmin = authStore.isAdmin();
   const isSuperAdmin = authStore.isSuperAdmin();
+  const isDeptAdmin = authStore.isDeptAdmin?.();
 
   return (
     <Drawer
@@ -52,7 +63,7 @@ const Sidebar = () => {
       </Toolbar>
       <Box sx={{ overflow: 'auto' }}>
         <List>
-          {navItems.filter(item => (!item.admin || isAdmin) && (!item.superadmin || isSuperAdmin)).map((item) => (
+          {navItems.filter(item => (!item.admin || isAdmin) && (!item.superadmin || isSuperAdmin) && ((!item.deptadmin || isDeptAdmin))).map((item) => (
             <ListItem key={item.text} disablePadding sx={{ py: 0.5 }}>
               <ListItemButton 
                 component={RouterLink} 
